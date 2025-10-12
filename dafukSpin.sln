@@ -1,0 +1,36 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.14.36511.14
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "dafukSpin", "src\dafukSpin\dafukSpin.csproj", "{66BE9663-9D8E-4F91-94A6-98989B339FE0}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "src", "src", "{02EA681E-C7D8-13C7-8484-4AC65E1B71E8}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "test", "test", "{9E382F93-A576-4911-9F97-85BCC307897C}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "script", "script", "{18B0D58E-87FD-4342-BCDF-91D07223921B}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "docs", "docs", "{9207AE1B-093A-4595-B56F-C6FBD9345B5C}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{66BE9663-9D8E-4F91-94A6-98989B339FE0}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{66BE9663-9D8E-4F91-94A6-98989B339FE0}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{66BE9663-9D8E-4F91-94A6-98989B339FE0}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{66BE9663-9D8E-4F91-94A6-98989B339FE0}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(NestedProjects) = preSolution
+		{66BE9663-9D8E-4F91-94A6-98989B339FE0} = {02EA681E-C7D8-13C7-8484-4AC65E1B71E8}
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {5A1FD72B-1930-4C6A-A5C0-DE6BFDCEC9DF}
+	EndGlobalSection
+EndGlobal
