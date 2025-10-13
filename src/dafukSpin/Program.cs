@@ -4,6 +4,10 @@ using Refit;
 using System.Text.Json;
 using Polly;
 using Polly.Extensions.Http;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Hosting;
+using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Configuration;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -33,10 +37,20 @@ builder.Services.AddRefitClient<IMyAnimeListApi>(refitSettings)
     .ConfigureHttpClient((serviceProvider, httpClient) =>
     {
         var configuration = serviceProvider.GetRequiredService<IConfiguration>();
+        var logger = serviceProvider.GetRequiredService<ILogger<Program>>();
         
         // Configure base URL and authentication
         var baseUrl = configuration["MyAnimeList:BaseUrl"] ?? "https://api.myanimelist.net/v2";
-        var clientId = configuration["MyAnimeList:ClientId"] ?? throw new InvalidOperationException("MyAnimeList ClientId not configured");
+        var clientId = configuration["MyAnimeList:ClientId"];
+        var clientSecret = configuration["MyAnimeList:ClientSecret"]; // Available for future OAuth implementation
+        
+        if (string.IsNullOrEmpty(clientId))
+        {
+            logger.LogError("MyAnimeList ClientId is not configured. Please set it using: dotnet user-secrets set \"MyAnimeList:ClientId\" \"your-client-id\"");
+            throw new InvalidOperationException("MyAnimeList ClientId not configured. Please configure it in user secrets.");
+        }
+        
+        logger.LogInformation("Configuring MyAnimeList API client with base URL: {BaseUrl}", baseUrl);
         
         httpClient.BaseAddress = new Uri(baseUrl);
         httpClient.DefaultRequestHeaders.Add("X-MAL-CLIENT-ID", clientId);
@@ -106,7 +120,7 @@ if (app.Environment.IsDevelopment())
 app.UseHttpsRedirection();
 
 // Map minimal API endpoints
-app.MapMyAnimeListEndpoints();
+app.MapEndpointsGroup();
 
 // Add a health check endpoint
 app.MapGet("/health", () => Results.Ok(new { status = "healthy", timestamp = DateTime.UtcNow }))

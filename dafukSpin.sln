@@ -14,6 +14,12 @@ EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "script", "script", "{18B0D58E-87FD-4342-BCDF-91D07223921B}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "docs", "docs", "{9207AE1B-093A-4595-B56F-C6FBD9345B5C}"
+	ProjectSection(SolutionItems) = preProject
+		LICENSE.txt = LICENSE.txt
+		MyAnimeList_API_Documentation.md = MyAnimeList_API_Documentation.md
+		NEW_ENDPOINTS_SUMMARY.md = NEW_ENDPOINTS_SUMMARY.md
+		README.md = README.md
+	EndProjectSection
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

@@ -33,7 +33,7 @@ src/dafukSpin/
 
 ### API Integration Pattern
 - **HttpClient Injection**: Services receive `HttpClient` via DI for external API calls
-- **Authentication Required**: MyAnimeList API requires Client ID authentication
+- **Authentication Required**: MyAnimeList API requires Client ID authentication (stored in user secrets)
 - **Base URL Configuration**: MyAnimeList API base URL configured in service constructors
 
 ### Model Conventions
@@ -56,7 +56,46 @@ return new List<CompletedAnimeDto>();
 - **Docker**: Multi-stage Dockerfile with .NET 8 runtime, exposes ports 8080/8081
 
 ### Configuration Requirements
-- Configuration required! MyAnimeList API requires Client ID authentication
+
+#### MyAnimeList API Credentials (Required)
+The application requires MyAnimeList API credentials which are stored securely using .NET User Secrets:
+
+**Setting up credentials:**
+```bash
+# Navigate to the project directory
+cd src/dafukSpin
+
+# Set your MyAnimeList Client ID (required for API access)
+dotnet user-secrets set "MyAnimeList:ClientId" "your-myanimelist-client-id"
+
+# Set your MyAnimeList Client Secret (for future OAuth implementation)
+dotnet user-secrets set "MyAnimeList:ClientSecret" "your-myanimelist-client-secret"
+```
+
+**Getting MyAnimeList API Credentials:**
+1. Visit [MyAnimeList API Documentation](https://myanimelist.net/apiconfig)
+2. Create a new API client application
+3. Use the generated Client ID and Client Secret
+
+**User Secrets ID:** `a9a5af1a-7d9c-4cf4-957f-e605da2a89e8`
+
+**Configuration Structure:**
+```json
+// User Secrets (secure, not committed to source control)
+{
+  "MyAnimeList:ClientId": "your-client-id",
+  "MyAnimeList:ClientSecret": "your-client-secret"
+}
+
+// appsettings.json (committed to source control)
+{
+  "MyAnimeList": {
+    "BaseUrl": "https://api.myanimelist.net/v2"
+  }
+}
+```
+
+**Note:** Never commit API credentials to source control. The application will throw a clear error message if credentials are missing.
 
 ### Testing Endpoints
 - Use the `.http` files in the project root for API testing
@@ -82,6 +121,18 @@ return new List<CompletedAnimeDto>();
 3. Register service with DI in `Program.cs`
 4. Add endpoint mappings in new or existing `Extensions/{Feature}Endpoints.cs`
 5. Map endpoints in `Program.cs` with `app.Map{Feature}Endpoints()`
+
+## Security & Configuration Best Practices
+
+### User Secrets Management
+- **Production**: Use Azure Key Vault, AWS Secrets Manager, or similar secure secret storage
+- **Development**: Use .NET User Secrets (already configured)
+- **Never**: Store credentials in appsettings.json, appsettings.Development.json, or commit them to source control
+
+### Environment-Specific Configuration
+- Base URLs and non-sensitive settings in `appsettings.json`
+- Development-specific logging levels in `appsettings.Development.json`
+- All credentials and sensitive data in User Secrets (dev) or secure secret stores (production)
 
 ## Coding Style & Guidelines
 
@@ -120,3 +171,4 @@ return new List<CompletedAnimeDto>();
 - Swagger is configured to display at the root URL for easy development access
 - All anime-related endpoints follow RESTful patterns under `/api/anime/`
 - The codebase prioritizes explicit configuration and clear separation of concerns over magic conventions
+- MyAnimeList credentials are securely stored in User Secrets and never committed to source control

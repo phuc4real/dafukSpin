@@ -1,43 +1,30 @@
 # dafukSpin
 
-## Overview
-dafukSpin is a .NET 8 ASP.NET Core Web API that integrates with the MyAnimeList API to provide anime data services. The project uses **Minimal APIs** architecture with a clean separation between services, models, and endpoint mappings.
+A modern .NET 8 Web API that integrates with the official MyAnimeList API to provide anime data services. Built with minimal APIs, Refit HTTP client library, and comprehensive error handling.
 
 ## Features
-- 🎯 **MyAnimeList API Integration**: Fetches anime data from official MyAnimeList API
-- 📋 **Top Completed Anime**: Get top-rated completed anime from MyAnimeList
-- 📺 **Top Airing Anime**: Get currently airing anime with high ratings
-- 📚 **Top Anime Rankings**: Paginated top anime listings from MyAnimeList
-- 🎲 **Random Upcoming Anime**: Get random anime from upcoming season
-- 🔍 **Anime Search**: Search for anime by title
-- 📖 **Anime Details**: Get detailed information for specific anime
-- 🚀 **Minimal APIs**: Modern ASP.NET Core minimal API architecture
-- 🔓 **No Authentication**: Direct access without API keys required
-- 📖 **OpenAPI/Swagger**: Full API documentation and testing interface
-- 🐳 **Docker Support**: Ready for containerized deployment
 
-## Architecture
+- **Official MyAnimeList API Integration**: Uses the official v2 API with proper authentication
+- **Minimal APIs Architecture**: Modern ASP.NET Core endpoint mapping with clean organization
+- **Comprehensive Anime Data**: User lists, anime details, search, rankings, and seasonal data
+- **Refit HTTP Client**: Type-safe API client with automatic JSON serialization
+- **Polly Resilience**: Built-in retry policies and circuit breakers
+- **Swagger Documentation**: Interactive API documentation at root URL
+- **User Secrets**: Secure credential storage for development
 
-### Technology Stack
-- **.NET 8** - Latest .NET framework
-- **ASP.NET Core** - Web framework with minimal APIs
-- **System.Text.Json** - High-performance JSON serialization
-- **HttpClient** - External API integration
-- **Swagger/OpenAPI** - API documentation
+## Architecture Highlights
 
-### Project Structure
-```
-src/dafukSpin/
-├── Extensions/        # Minimal API endpoint mappings
-├── Models/           # DTOs and data models
-├── Services/         # Business logic and external API integration
-└── Program.cs        # Application entry point and configuration
-```
+- **Modern C# Patterns**: Records, pattern matching, file-scoped namespaces
+- **Clean Separation**: Services, models, and endpoint mappings in separate layers
+- **Type Safety**: Strongly-typed models with proper JSON serialization
+- **Error Handling**: Comprehensive logging and graceful error responses
 
-### Key Patterns
-- **Minimal APIs**: No controllers, endpoints defined via extension methods
-- **Dependency Injection**: HttpClient injection for external API calls
-- **Records for DTOs**: Immutable data structures with modern C# syntax
+### Design Patterns
+- **Service Layer**: Clean abstraction over external API calls
+- **Repository Pattern**: Structured data access with interfaces
+- **Options Pattern**: Configuration binding with validation
+- **Dependency Injection**: Clean service registration and lifecycle management
+- **Record Types**: Immutable data structures with modern C# syntax
 - **Sealed Classes**: Performance optimization and clear inheritance intent
 - **File-scoped Namespaces**: Modern C# namespace declarations
 
@@ -45,109 +32,111 @@ src/dafukSpin/
 
 ### Prerequisites
 - .NET 8 SDK
+- MyAnimeList API credentials (Client ID)
 - Internet connection (for MyAnimeList API access)
 
 ### Setup
+
 1. **Clone the repository**
    ```bash
    git clone https://github.com/phuc4real/dafukSpin.git
    cd dafukSpin
    ```
 
-2. **Run the application**
+2. **Configure MyAnimeList API Credentials**
+   
+   The application requires MyAnimeList API credentials stored securely in user secrets:
+   
+   ```bash
+   cd src/dafukSpin
+   
+   # Set your MyAnimeList Client ID (required)
+   dotnet user-secrets set "MyAnimeList:ClientId" "your-client-id-here"
+   
+   # Set your MyAnimeList Client Secret (for future OAuth features)
+   dotnet user-secrets set "MyAnimeList:ClientSecret" "your-client-secret-here"
+   ```
+   
+   **Getting MyAnimeList API Credentials:**
+   1. Visit [MyAnimeList API Configuration](https://myanimelist.net/apiconfig)
+   2. Create a new API client application
+   3. Copy the generated Client ID and Client Secret
+   
+   **Important:** Never commit API credentials to source control. They are securely stored in user secrets.
+
+3. **Run the application**
    ```bash
    cd src/dafukSpin
    dotnet run
    ```
 
-3. **Access the API**
+4. **Access the API**
    - **Swagger UI**: `https://localhost:7069` or `http://localhost:5244`
-   - **API Base**: `http://localhost:5244/api/anime`
-
-**Configuration required!** The API uses the official MyAnimeList API which requires Client ID authentication.
+   - **API Base**: `http://localhost:5244/api`
 
 ## API Endpoints
 
 ### Base URL
 ```
-http://localhost:5244/api/myanimelist
+http://localhost:5244/api
 ```
 
 ### Available Endpoints
 
-#### Get User's Completed Anime
-```http
-GET /users/{username}/completed
-```
-Returns the completed anime list for a specific MyAnimeList user.
+#### User Anime Lists
+- `GET /users/{username}/completed` - Get user's completed anime
+- `GET /users/{username}/watching` - Get user's currently watching anime
+- `GET /users/{username}/plan-to-watch` - Get user's plan to watch anime
+- `GET /users/{username}/on-hold` - Get user's on hold anime
+- `GET /users/{username}/dropped` - Get user's dropped anime
+- `GET /users/{username}/animelist` - Get user's anime list with custom status filter
 
-#### Get User's Currently Watching Anime
-```http
-GET /users/{username}/watching
-```
-Returns the currently watching anime list for a specific MyAnimeList user.
+#### Anime Details & Search
+- `GET /anime/{animeId}` - Get detailed anime information
+- `GET /anime/search` - Search anime by query
 
-#### Get User's Plan to Watch Anime
-```http
-GET /users/{username}/plan-to-watch
-```
-Returns the plan to watch anime list for a specific MyAnimeList user.
+#### Discovery & Rankings
+- `GET /anime/ranking` - Get anime rankings by type
+- `GET /anime/season/{year}/{season}` - Get seasonal anime
+- `GET /anime/suggestions` - Get suggested anime (requires authentication)
 
-#### Get User's Anime List
-```http
-GET /users/{username}/animelist?status={status}&sort={sort}&limit={limit}&offset={offset}
-```
-Returns anime list for a specific user with custom status filter and pagination.
-
-#### Get Random Plan to Watch Anime
-```http
-GET /users/{username}/plan-to-watch/random
-```
-Returns a random anime from the user's plan to watch list.
-
-#### Get User's Anime History
-```http
-GET /users/{username}/history?page={page}&pageSize={pageSize}
-```
-Returns paginated anime history for a specific user.
+#### Health Check
+- `GET /health` - API health status
 
 ### Example Usage
 
 **Get user's completed anime:**
 ```http
-GET http://localhost:5244/api/myanimelist/users/testuser/completed
+GET http://localhost:5244/api/users/testuser/completed
 ```
 
-**Response:**
+**Get anime details:**
+```http
+GET http://localhost:5244/api/anime/5114
+```
+
+**Search for anime:**
+```http
+GET http://localhost:5244/api/anime/search?query=naruto&limit=10
+```
+
+**Get seasonal anime:**
+```http
+GET http://localhost:5244/api/anime/season/2024/spring
+```
+
+### Response Format
+
+All endpoints return JSON responses with consistent error handling:
+
 ```json
-[
-  {
-    "id": 5114,
-    "title": "Fullmetal Alchemist: Brotherhood",
-    "englishTitle": "Fullmetal Alchemist: Brotherhood",
-    "imageUrl": "https://cdn.myanimelist.net/images/anime/1208/94745l.jpg",
-    "score": 9.1,
-    "userScore": 10,
-    "rank": 1,
-    "popularity": 3,
-    "numEpisodes": 64,
-    "mediaType": "TV",
-    "rating": "R - 17+ (violence & profanity)",
-    "genres": ["Action", "Adventure", "Drama", "Fantasy"],
-    "completedAt": "2023-04-01T12:00:00Z",
-    "finishDate": "2023-03-31"
+{
+  "data": [...],
+  "paging": {
+    "previous": "string",
+    "next": "string"
   }
-]
-```
-
-**Get user's currently watching anime:**
-```http
-GET http://localhost:5244/api/myanimelist/users/testuser/watching
-```
-
-**Get user's anime history:**
-```http
-GET http://localhost:5244/api/myanimelist/users/testuser/history?page=1&pageSize=10
+}
 ```
 
 ## Development
@@ -175,17 +164,43 @@ dotnet build -c Release
 # Build Docker image
 docker build -t dafukspin .
 
-# Run container
-docker run -p 8080:8080 dafukspin
+# Run container (Note: User secrets not available in container)
+docker run -p 8080:8080 -e MyAnimeList__ClientId="your-client-id" dafukspin
 ```
 
 ## Configuration
 
+### User Secrets Configuration
+Development credentials are stored in .NET User Secrets:
+
+```json
+{
+  "MyAnimeList:ClientId": "your-client-id",
+  "MyAnimeList:ClientSecret": "your-client-secret"
+}
+```
+
+### Application Settings
+Public configuration in `appsettings.json`:
+
+```json
+{
+  "MyAnimeList": {
+    "BaseUrl": "https://api.myanimelist.net/v2"
+  }
+}
+```
+
+### Production Configuration
+For production deployment:
+- Use Azure Key Vault, AWS Secrets Manager, or similar secure storage
+- Set environment variables: `MyAnimeList__ClientId` and `MyAnimeList__ClientSecret`
+- Never store credentials in configuration files
+
 ### Environment Variables
 - `ASPNETCORE_ENVIRONMENT`: Environment (Development/Production)
-
-### API Keys Required
-The MyAnimeList API requires Client ID authentication. Configure your Client ID in the appsettings.json file.
+- `MyAnimeList__ClientId`: MyAnimeList API Client ID (production)
+- `MyAnimeList__ClientSecret`: MyAnimeList API Client Secret (production)
 
 ## Contributing
 
