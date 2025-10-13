@@ -1,321 +1,262 @@
-using System.Text.Json;
 using dafukSpin.Models;
+using Refit;
 
-namespace dafukSpin.Services
+namespace dafukSpin.Services;
+
+/// <summary>
+/// Service wrapper for MyAnimeList API using Refit
+/// Provides high-level business operations with error handling and logging
+/// </summary>
+public interface IMyAnimeListService
 {
-    public interface IMyAnimeListService
+    // User anime list operations
+    Task<MyAnimeListResponse<AnimeEntry>?> GetUserAnimeListAsync(string username, string? status = null, string? sort = null, int limit = 100, int offset = 0, CancellationToken cancellationToken = default);
+    Task<MyAnimeListResponse<AnimeEntry>?> GetUserCompletedAnimeAsync(string username, string? sort = null, int limit = 100, int offset = 0, CancellationToken cancellationToken = default);
+    Task<MyAnimeListResponse<AnimeEntry>?> GetUserCurrentlyWatchingAnimeAsync(string username, string? sort = null, int limit = 100, int offset = 0, CancellationToken cancellationToken = default);
+    Task<MyAnimeListResponse<AnimeEntry>?> GetUserPlanToWatchAnimeAsync(string username, string? sort = null, int limit = 100, int offset = 0, CancellationToken cancellationToken = default);
+    Task<MyAnimeListResponse<AnimeEntry>?> GetUserOnHoldAnimeAsync(string username, string? sort = null, int limit = 100, int offset = 0, CancellationToken cancellationToken = default);
+    Task<MyAnimeListResponse<AnimeEntry>?> GetUserDroppedAnimeAsync(string username, string? sort = null, int limit = 100, int offset = 0, CancellationToken cancellationToken = default);
+    
+    // Anime details and search
+    Task<AnimeNode?> GetAnimeDetailsAsync(int animeId, CancellationToken cancellationToken = default);
+    Task<MyAnimeListResponse<AnimeSearchResult>?> SearchAnimeAsync(string query, int limit = 100, int offset = 0, CancellationToken cancellationToken = default);
+    
+    // Rankings and seasonal
+    Task<MyAnimeListResponse<AnimeRankingEntry>?> GetAnimeRankingAsync(string rankingType = "all", int limit = 100, int offset = 0, CancellationToken cancellationToken = default);
+    Task<MyAnimeListResponse<AnimeSeasonEntry>?> GetSeasonalAnimeAsync(int year, string season, string? sort = null, int limit = 100, int offset = 0, CancellationToken cancellationToken = default);
+    Task<MyAnimeListResponse<AnimeEntry>?> GetSuggestedAnimeAsync(int limit = 100, int offset = 0, CancellationToken cancellationToken = default);
+}
+
+public sealed class MyAnimeListService : IMyAnimeListService
+{
+    private readonly IMyAnimeListApi _api;
+    private readonly ILogger<MyAnimeListService> _logger;
+    
+    // Standard field sets for different operations
+    private const string DetailedFields = "alternative_titles,start_date,end_date,synopsis,mean,rank,popularity,num_episodes,start_season,broadcast,source,average_episode_duration,rating,pictures,background,related_anime,related_manga,recommendations,studios,statistics,genres,media_type,status,num_list_users,num_scoring_users,nsfw,created_at,updated_at";
+    private const string ListFields = "list_status,alternative_titles,start_date,end_date,synopsis,mean,rank,popularity,num_episodes,start_season,broadcast,source,average_episode_duration,rating,pictures,background,genres,studios,media_type,status";
+    private const string BasicFields = "alternative_titles,start_date,end_date,synopsis,mean,rank,popularity,num_episodes,start_season,source,rating,genres,studios,media_type";
+
+    public MyAnimeListService(IMyAnimeListApi api, ILogger<MyAnimeListService> logger)
     {
-        Task<List<CompletedAnimeDto>> GetTop10LatestCompletedAnimeAsync(string username);
-        Task<List<CurrentlyWatchingAnimeDto>> GetTop5CurrentlyWatchingAnimeAsync(string username);
-        Task<PagedAnimeHistoryResponse> GetUserAnimeHistoryAsync(string username, int page = 1, int pageSize = 20);
-        Task<PlanToWatchAnimeDto?> GetRandomPlanToWatchAnimeAsync(string username);
+        _api = api;
+        _logger = logger;
     }
 
-    public class MyAnimeListService : IMyAnimeListService
+    public async Task<MyAnimeListResponse<AnimeEntry>?> GetUserAnimeListAsync(
+        string username, 
+        string? status = null, 
+        string? sort = null, 
+        int limit = 100, 
+        int offset = 0, 
+        CancellationToken cancellationToken = default)
     {
-        private readonly HttpClient _httpClient;
-        private readonly ILogger<MyAnimeListService> _logger;
-        private readonly IConfiguration _configuration;
-        private const string BaseUrl = "https://api.myanimelist.net/v2";
-
-        public MyAnimeListService(HttpClient httpClient, ILogger<MyAnimeListService> logger, IConfiguration configuration)
+        try
         {
-            _httpClient = httpClient;
-            _logger = logger;
-            _configuration = configuration;
+            _logger.LogInformation("Fetching anime list for user: {Username} with status: {Status}, sort: {Sort}", username, status, sort);
             
-            // Configure HttpClient
-            _httpClient.BaseAddress = new Uri(BaseUrl);
-            _httpClient.DefaultRequestHeaders.Accept.Clear();
-            _httpClient.DefaultRequestHeaders.Accept.Add(
-                new System.Net.Http.Headers.MediaTypeWithQualityHeaderValue("application/json"));
+            var result = await _api.GetUserAnimeListAsync(username, status, sort, limit, offset, ListFields, cancellationToken);
             
-            // Add Client ID for MyAnimeList API (required for public endpoints)
-            var clientId = _configuration["MyAnimeList:ClientId"];
-            if (!string.IsNullOrEmpty(clientId))
-            {
-                _httpClient.DefaultRequestHeaders.Add("X-MAL-CLIENT-ID", clientId);
-            }
+            _logger.LogInformation("Successfully fetched {Count} anime entries for user: {Username}", result.Data.Count, username);
+            return result;
         }
-
-        public async Task<List<CompletedAnimeDto>> GetTop10LatestCompletedAnimeAsync(string username)
+        catch (ApiException ex)
         {
-            try
-            {
-                _logger.LogInformation("Fetching completed anime for user: {Username}", username);
-
-                var animeList = await GetUserAnimeListAsync(username, "completed", 10, "list_updated_at");
-
-                var completedAnime = animeList
-                    .Where(entry => entry.ListStatus.Status == "completed")
-                    .OrderByDescending(entry => entry.ListStatus.UpdatedAt)
-                    .Take(10)
-                    .Select(entry => new CompletedAnimeDto
-                    {
-                        Id = entry.Node.Id,
-                        Title = entry.Node.Title,
-                        EnglishTitle = entry.Node.AlternativeTitles.English,
-                        ImageUrl = entry.Node.MainPicture.Large ?? entry.Node.MainPicture.Medium,
-                        Score = entry.Node.Mean,
-                        UserScore = entry.ListStatus.Score,
-                        Rank = entry.Node.Rank,
-                        Popularity = entry.Node.Popularity,
-                        NumEpisodes = entry.Node.NumEpisodes,
-                        MediaType = entry.Node.MediaType,
-                        Rating = entry.Node.Rating,
-                        Genres = entry.Node.Genres.Select(g => g.Name).ToList(),
-                        CompletedAt = entry.ListStatus.UpdatedAt,
-                        FinishDate = entry.ListStatus.FinishDate
-                    })
-                    .ToList();
-
-                _logger.LogInformation("Successfully fetched {Count} completed anime for user {Username}", 
-                    completedAnime.Count, username);
-
-                return completedAnime;
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "Error fetching completed anime for user {Username}", username);
-                throw;
-            }
+            _logger.LogWarning("API error fetching anime list for user: {Username}. Status: {StatusCode}, Content: {Content}", 
+                username, ex.StatusCode, ex.Content);
+            return null;
         }
-
-        public async Task<List<CurrentlyWatchingAnimeDto>> GetTop5CurrentlyWatchingAnimeAsync(string username)
+        catch (Exception ex)
         {
-            try
-            {
-                _logger.LogInformation("Fetching currently watching anime for user: {Username}", username);
-
-                var animeList = await GetUserAnimeListAsync(username, "watching", 5, "list_updated_at");
-
-                var currentlyWatching = animeList
-                    .Where(entry => entry.ListStatus.Status == "watching")
-                    .OrderByDescending(entry => entry.ListStatus.UpdatedAt)
-                    .Take(5)
-                    .Select(entry => new CurrentlyWatchingAnimeDto
-                    {
-                        Id = entry.Node.Id,
-                        Title = entry.Node.Title,
-                        EnglishTitle = entry.Node.AlternativeTitles.English,
-                        ImageUrl = entry.Node.MainPicture.Large ?? entry.Node.MainPicture.Medium,
-                        Score = entry.Node.Mean,
-                        UserScore = entry.ListStatus.Score,
-                        Rank = entry.Node.Rank,
-                        Popularity = entry.Node.Popularity,
-                        NumEpisodes = entry.Node.NumEpisodes,
-                        NumEpisodesWatched = entry.ListStatus.NumEpisodesWatched,
-                        MediaType = entry.Node.MediaType,
-                        Rating = entry.Node.Rating,
-                        Genres = entry.Node.Genres.Select(g => g.Name).ToList(),
-                        Studios = entry.Node.Studios.Select(s => s.Name).ToList(),
-                        IsRewatching = entry.ListStatus.IsRewatching,
-                        LastUpdated = entry.ListStatus.UpdatedAt,
-                        StartDate = entry.ListStatus.StartDate,
-                        ProgressPercentage = CalculateProgressPercentage(entry.ListStatus.NumEpisodesWatched, entry.Node.NumEpisodes)
-                    })
-                    .ToList();
-
-                _logger.LogInformation("Successfully fetched {Count} currently watching anime for user {Username}", 
-                    currentlyWatching.Count, username);
-
-                return currentlyWatching;
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "Error fetching currently watching anime for user {Username}", username);
-                throw;
-            }
+            _logger.LogError(ex, "Error fetching anime list for user: {Username}", username);
+            return null;
         }
+    }
 
-        public async Task<PagedAnimeHistoryResponse> GetUserAnimeHistoryAsync(string username, int page = 1, int pageSize = 20)
+    public async Task<MyAnimeListResponse<AnimeEntry>?> GetUserCompletedAnimeAsync(
+        string username, 
+        string? sort = null, 
+        int limit = 100, 
+        int offset = 0, 
+        CancellationToken cancellationToken = default)
+    {
+        return await GetUserAnimeListAsync(username, "completed", sort, limit, offset, cancellationToken);
+    }
+
+    public async Task<MyAnimeListResponse<AnimeEntry>?> GetUserCurrentlyWatchingAnimeAsync(
+        string username, 
+        string? sort = null, 
+        int limit = 100, 
+        int offset = 0, 
+        CancellationToken cancellationToken = default)
+    {
+        return await GetUserAnimeListAsync(username, "watching", sort, limit, offset, cancellationToken);
+    }
+
+    public async Task<MyAnimeListResponse<AnimeEntry>?> GetUserPlanToWatchAnimeAsync(
+        string username, 
+        string? sort = null, 
+        int limit = 100, 
+        int offset = 0, 
+        CancellationToken cancellationToken = default)
+    {
+        return await GetUserAnimeListAsync(username, "plan_to_watch", sort, limit, offset, cancellationToken);
+    }
+
+    public async Task<MyAnimeListResponse<AnimeEntry>?> GetUserOnHoldAnimeAsync(
+        string username, 
+        string? sort = null, 
+        int limit = 100, 
+        int offset = 0, 
+        CancellationToken cancellationToken = default)
+    {
+        return await GetUserAnimeListAsync(username, "on_hold", sort, limit, offset, cancellationToken);
+    }
+
+    public async Task<MyAnimeListResponse<AnimeEntry>?> GetUserDroppedAnimeAsync(
+        string username, 
+        string? sort = null, 
+        int limit = 100, 
+        int offset = 0, 
+        CancellationToken cancellationToken = default)
+    {
+        return await GetUserAnimeListAsync(username, "dropped", sort, limit, offset, cancellationToken);
+    }
+
+    public async Task<AnimeNode?> GetAnimeDetailsAsync(int animeId, CancellationToken cancellationToken = default)
+    {
+        try
         {
-            try
-            {
-                _logger.LogInformation("Fetching anime history for user: {Username}, page: {Page}, pageSize: {PageSize}", 
-                    username, page, pageSize);
-
-                // Get all statuses for comprehensive history
-                var allAnimeList = await GetUserAnimeListAsync(username, "", pageSize * 5, "list_updated_at"); // Get more data for pagination
-
-                var allHistory = allAnimeList
-                    .OrderByDescending(entry => entry.ListStatus.UpdatedAt)
-                    .Select(entry => new AnimeHistoryDto
-                    {
-                        Id = entry.Node.Id,
-                        Title = entry.Node.Title,
-                        EnglishTitle = entry.Node.AlternativeTitles.English,
-                        ImageUrl = entry.Node.MainPicture.Large ?? entry.Node.MainPicture.Medium,
-                        Score = entry.Node.Mean,
-                        UserScore = entry.ListStatus.Score,
-                        Rank = entry.Node.Rank,
-                        Popularity = entry.Node.Popularity,
-                        NumEpisodes = entry.Node.NumEpisodes,
-                        MediaType = entry.Node.MediaType,
-                        Rating = entry.Node.Rating,
-                        Genres = entry.Node.Genres.Select(g => g.Name).ToList(),
-                        Studios = entry.Node.Studios.Select(s => s.Name).ToList(),
-                        CompletedAt = entry.ListStatus.UpdatedAt,
-                        FinishDate = entry.ListStatus.FinishDate,
-                        StartDate = entry.ListStatus.StartDate,
-                        NumTimesRewatched = entry.ListStatus.NumTimesRewatched,
-                        Comments = entry.ListStatus.Comments,
-                        Tags = entry.ListStatus.Tags
-                    })
-                    .ToList();
-
-                var totalItems = allHistory.Count;
-                var totalPages = (int)Math.Ceiling((double)totalItems / pageSize);
-                var skip = (page - 1) * pageSize;
-                var pagedData = allHistory.Skip(skip).Take(pageSize).ToList();
-
-                var response = new PagedAnimeHistoryResponse
-                {
-                    Data = pagedData,
-                    Pagination = new PaginationInfo
-                    {
-                        CurrentPage = page,
-                        TotalPages = totalPages,
-                        TotalItems = totalItems,
-                        PageSize = pageSize,
-                        HasNext = page < totalPages,
-                        HasPrevious = page > 1
-                    }
-                };
-
-                _logger.LogInformation("Successfully fetched anime history for user {Username}. Page {Page}/{TotalPages}, {Count} items", 
-                    username, page, totalPages, pagedData.Count);
-
-                return response;
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "Error fetching anime history for user {Username}", username);
-                throw;
-            }
-        }
-
-        public async Task<PlanToWatchAnimeDto?> GetRandomPlanToWatchAnimeAsync(string username)
-        {
-            try
-            {
-                _logger.LogInformation("Fetching random plan to watch anime for user: {Username}", username);
-
-                var planToWatchList = await GetUserAnimeListAsync(username, "plan_to_watch", 1000, "list_updated_at");
-
-                var planToWatchAnime = planToWatchList
-                    .Where(entry => entry.ListStatus.Status == "plan_to_watch")
-                    .ToList();
-
-                if (!planToWatchAnime.Any())
-                {
-                    _logger.LogInformation("No plan to watch anime found for user {Username}", username);
-                    return null;
-                }
-
-                // Get random anime from the list
-                var random = new Random();
-                var randomEntry = planToWatchAnime[random.Next(planToWatchAnime.Count)];
-
-                var result = new PlanToWatchAnimeDto
-                {
-                    Id = randomEntry.Node.Id,
-                    Title = randomEntry.Node.Title,
-                    EnglishTitle = randomEntry.Node.AlternativeTitles.English,
-                    ImageUrl = randomEntry.Node.MainPicture.Large ?? randomEntry.Node.MainPicture.Medium,
-                    Score = randomEntry.Node.Mean,
-                    Rank = randomEntry.Node.Rank,
-                    Popularity = randomEntry.Node.Popularity,
-                    NumEpisodes = randomEntry.Node.NumEpisodes,
-                    MediaType = randomEntry.Node.MediaType,
-                    Rating = randomEntry.Node.Rating,
-                    Genres = randomEntry.Node.Genres.Select(g => g.Name).ToList(),
-                    Studios = randomEntry.Node.Studios.Select(s => s.Name).ToList(),
-                    Synopsis = randomEntry.Node.Synopsis,
-                    StartDate = randomEntry.Node.StartDate,
-                    EndDate = randomEntry.Node.EndDate,
-                    Source = randomEntry.Node.Source,
-                    Priority = randomEntry.ListStatus.Priority,
-                    AddedToListAt = randomEntry.ListStatus.UpdatedAt,
-                    Tags = randomEntry.ListStatus.Tags,
-                    Comments = randomEntry.ListStatus.Comments
-                };
-
-                _logger.LogInformation("Successfully selected random plan to watch anime '{Title}' for user {Username}", 
-                    result.Title, username);
-
-                return result;
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "Error fetching random plan to watch anime for user {Username}", username);
-                throw;
-            }
-        }
-
-        private async Task<List<AnimeEntry>> GetUserAnimeListAsync(string username, string status, int limit, string sort)
-        {
-            // Check if MyAnimeList Client ID is configured
-            var clientId = _configuration["MyAnimeList:ClientId"];
-            if (string.IsNullOrEmpty(clientId))
-            {
-                throw new InvalidOperationException("MyAnimeList Client ID is not configured. Please add 'MyAnimeList:ClientId' to your configuration.");
-            }
-
-            // Build request URL
-            var requestUrl = $"/users/{username}/animelist?";
+            _logger.LogInformation("Fetching anime details for ID: {AnimeId}", animeId);
             
-            if (!string.IsNullOrEmpty(status))
-            {
-                requestUrl += $"status={status}&";
-            }
+            var result = await _api.GetAnimeDetailsAsync(animeId, DetailedFields, cancellationToken);
             
-            requestUrl += $"sort={sort}&" +
-                         $"limit={limit}&" +
-                         "fields=id,title,main_picture,alternative_titles,start_date,end_date,synopsis,mean,rank,popularity,num_episodes,status,genres,media_type,rating,source,studios";
-
-            var response = await _httpClient.GetAsync(requestUrl);
-
-            if (!response.IsSuccessStatusCode)
-            {
-                _logger.LogError("Failed to fetch data from MyAnimeList API. Status: {StatusCode}, Reason: {ReasonPhrase}", 
-                    response.StatusCode, response.ReasonPhrase);
-                
-                if (response.StatusCode == System.Net.HttpStatusCode.NotFound)
-                {
-                    throw new ArgumentException($"User '{username}' not found or has private list");
-                }
-                
-                if (response.StatusCode == System.Net.HttpStatusCode.Unauthorized)
-                {
-                    throw new UnauthorizedAccessException("Invalid MyAnimeList Client ID or insufficient permissions");
-                }
-                
-                throw new HttpRequestException($"MyAnimeList API request failed: {response.StatusCode}");
-            }
-
-            var jsonContent = await response.Content.ReadAsStringAsync();
-            _logger.LogDebug("Received response: {JsonContent}", jsonContent);
-
-            var malResponse = JsonSerializer.Deserialize<MyAnimeListResponse>(jsonContent);
-
-            if (malResponse?.Data == null)
-            {
-                _logger.LogWarning("No data received from MyAnimeList API");
-                return new List<AnimeEntry>();
-            }
-
-            return malResponse.Data;
+            _logger.LogInformation("Successfully fetched anime details for ID: {AnimeId}", animeId);
+            return result;
         }
-
-        private static double CalculateProgressPercentage(int episodesWatched, int? totalEpisodes)
+        catch (ApiException ex)
         {
-            if (!totalEpisodes.HasValue || totalEpisodes <= 0)
-            {
-                return 0.0;
-            }
+            _logger.LogWarning("API error fetching anime details for ID: {AnimeId}. Status: {StatusCode}, Content: {Content}", 
+                animeId, ex.StatusCode, ex.Content);
+            return null;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error fetching anime details for ID: {AnimeId}", animeId);
+            return null;
+        }
+    }
 
-            return Math.Min(100.0, (double)episodesWatched / totalEpisodes.Value * 100.0);
+    public async Task<MyAnimeListResponse<AnimeSearchResult>?> SearchAnimeAsync(
+        string query, 
+        int limit = 100, 
+        int offset = 0, 
+        CancellationToken cancellationToken = default)
+    {
+        try
+        {
+            _logger.LogInformation("Searching anime with query: {Query}", query);
+            
+            var result = await _api.SearchAnimeAsync(query, limit, offset, BasicFields, cancellationToken);
+            
+            _logger.LogInformation("Successfully found {Count} anime results for query: {Query}", result.Data.Count, query);
+            return result;
+        }
+        catch (ApiException ex)
+        {
+            _logger.LogWarning("API error searching anime with query: {Query}. Status: {StatusCode}, Content: {Content}", 
+                query, ex.StatusCode, ex.Content);
+            return null;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error searching anime with query: {Query}", query);
+            return null;
+        }
+    }
+
+    public async Task<MyAnimeListResponse<AnimeRankingEntry>?> GetAnimeRankingAsync(
+        string rankingType = "all", 
+        int limit = 100, 
+        int offset = 0, 
+        CancellationToken cancellationToken = default)
+    {
+        try
+        {
+            _logger.LogInformation("Fetching anime ranking with type: {RankingType}", rankingType);
+            
+            var result = await _api.GetAnimeRankingAsync(rankingType, limit, offset, BasicFields, cancellationToken);
+            
+            _logger.LogInformation("Successfully fetched {Count} anime ranking entries for type: {RankingType}", result.Data.Count, rankingType);
+            return result;
+        }
+        catch (ApiException ex)
+        {
+            _logger.LogWarning("API error fetching anime ranking with type: {RankingType}. Status: {StatusCode}, Content: {Content}", 
+                rankingType, ex.StatusCode, ex.Content);
+            return null;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error fetching anime ranking with type: {RankingType}", rankingType);
+            return null;
+        }
+    }
+
+    public async Task<MyAnimeListResponse<AnimeSeasonEntry>?> GetSeasonalAnimeAsync(
+        int year, 
+        string season, 
+        string? sort = null, 
+        int limit = 100, 
+        int offset = 0, 
+        CancellationToken cancellationToken = default)
+    {
+        try
+        {
+            _logger.LogInformation("Fetching seasonal anime for {Year} {Season} with sort: {Sort}", year, season, sort);
+            
+            var result = await _api.GetSeasonalAnimeAsync(year, season, sort, limit, offset, BasicFields, cancellationToken);
+            
+            _logger.LogInformation("Successfully fetched {Count} seasonal anime entries for {Year} {Season}", result.Data.Count, year, season);
+            return result;
+        }
+        catch (ApiException ex)
+        {
+            _logger.LogWarning("API error fetching seasonal anime for {Year} {Season}. Status: {StatusCode}, Content: {Content}", 
+                year, season, ex.StatusCode, ex.Content);
+            return null;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error fetching seasonal anime for {Year} {Season}", year, season);
+            return null;
+        }
+    }
+
+    public async Task<MyAnimeListResponse<AnimeEntry>?> GetSuggestedAnimeAsync(
+        int limit = 100, 
+        int offset = 0, 
+        CancellationToken cancellationToken = default)
+    {
+        try
+        {
+            _logger.LogInformation("Fetching suggested anime");
+            
+            var result = await _api.GetSuggestedAnimeAsync(limit, offset, BasicFields, cancellationToken);
+            
+            _logger.LogInformation("Successfully fetched {Count} suggested anime entries", result.Data.Count);
+            return result;
+        }
+        catch (ApiException ex)
+        {
+            _logger.LogWarning("API error fetching suggested anime. Status: {StatusCode}, Content: {Content}", 
+                ex.StatusCode, ex.Content);
+            return null;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error fetching suggested anime");
+            return null;
         }
     }
 }

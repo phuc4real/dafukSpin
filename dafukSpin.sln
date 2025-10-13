@@ -5,6 +5,8 @@ VisualStudioVersion = 17.14.36511.14
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "dafukSpin", "src\dafukSpin\dafukSpin.csproj", "{66BE9663-9D8E-4F91-94A6-98989B339FE0}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "dafukSpin.Tests", "test\dafukSpin.Tests\dafukSpin.Tests.csproj", "{A1B2C3D4-E5F6-7890-ABCD-EF1234567890}"
+EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "src", "src", "{02EA681E-C7D8-13C7-8484-4AC65E1B71E8}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "test", "test", "{9E382F93-A576-4911-9F97-85BCC307897C}"
@@ -23,12 +25,17 @@ Global
 		{66BE9663-9D8E-4F91-94A6-98989B339FE0}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{66BE9663-9D8E-4F91-94A6-98989B339FE0}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{66BE9663-9D8E-4F91-94A6-98989B339FE0}.Release|Any CPU.Build.0 = Release|Any CPU
+		{A1B2C3D4-E5F6-7890-ABCD-EF1234567890}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{A1B2C3D4-E5F6-7890-ABCD-EF1234567890}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{A1B2C3D4-E5F6-7890-ABCD-EF1234567890}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{A1B2C3D4-E5F6-7890-ABCD-EF1234567890}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
 	EndGlobalSection
 	GlobalSection(NestedProjects) = preSolution
 		{66BE9663-9D8E-4F91-94A6-98989B339FE0} = {02EA681E-C7D8-13C7-8484-4AC65E1B71E8}
+		{A1B2C3D4-E5F6-7890-ABCD-EF1234567890} = {9E382F93-A576-4911-9F97-85BCC307897C}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {5A1FD72B-1930-4C6A-A5C0-DE6BFDCEC9DF}

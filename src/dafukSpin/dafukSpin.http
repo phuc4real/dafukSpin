@@ -1,6 +1,27 @@
 @dafukSpin_HostAddress = http://localhost:5244
 
-GET {{dafukSpin_HostAddress}}/weatherforecast/
+# MyAnimeList API Endpoints
+
+### Get Top 10 Latest Completed Anime
+GET {{dafukSpin_HostAddress}}/api/myanimelist/users/testuser/completed-anime
+Accept: application/json
+
+###
+
+### Get Top 5 Currently Watching Anime
+GET {{dafukSpin_HostAddress}}/api/myanimelist/users/testuser/currently-watching
+Accept: application/json
+
+###
+
+### Get User Anime History (Paginated)
+GET {{dafukSpin_HostAddress}}/api/myanimelist/users/testuser/history?page=1&pageSize=10
+Accept: application/json
+
+###
+
+### Get Random Plan to Watch Anime
+GET {{dafukSpin_HostAddress}}/api/myanimelist/users/testuser/plan-to-watch/random
 Accept: application/json
 
 ###

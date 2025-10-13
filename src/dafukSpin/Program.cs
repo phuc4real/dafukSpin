@@ -1,14 +1,58 @@
 using dafukSpin.Services;
 using dafukSpin.Extensions;
+using Refit;
+using System.Text.Json;
+using Polly;
+using Polly.Extensions.Http;
 
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
-// Remove AddControllers() since we're using minimal APIs
-// builder.Services.AddControllers();
+// Configure JSON serialization options for MyAnimeList API compatibility
+builder.Services.ConfigureHttpJsonOptions(options =>
+{
+    options.SerializerOptions.PropertyNamingPolicy = JsonNamingPolicy.SnakeCaseLower;
+    options.SerializerOptions.WriteIndented = true;
+});
 
-// Add HttpClient for MyAnimeList service
-builder.Services.AddHttpClient<IMyAnimeListService, MyAnimeListService>();
+// Configure Refit for MyAnimeList API
+var refitSettings = new RefitSettings
+{
+    ContentSerializer = new SystemTextJsonContentSerializer(
+        new JsonSerializerOptions
+        {
+            PropertyNamingPolicy = JsonNamingPolicy.SnakeCaseLower,
+            WriteIndented = true,
+            PropertyNameCaseInsensitive = true
+        }
+    )
+};
+
+// Add Refit client for MyAnimeList API with authentication
+builder.Services.AddRefitClient<IMyAnimeListApi>(refitSettings)
+    .ConfigureHttpClient((serviceProvider, httpClient) =>
+    {
+        var configuration = serviceProvider.GetRequiredService<IConfiguration>();
+        
+        // Configure base URL and authentication
+        var baseUrl = configuration["MyAnimeList:BaseUrl"] ?? "https://api.myanimelist.net/v2";
+        var clientId = configuration["MyAnimeList:ClientId"] ?? throw new InvalidOperationException("MyAnimeList ClientId not configured");
+        
+        httpClient.BaseAddress = new Uri(baseUrl);
+        httpClient.DefaultRequestHeaders.Add("X-MAL-CLIENT-ID", clientId);
+        httpClient.DefaultRequestHeaders.Add("User-Agent", "dafukSpin/1.0");
+        
+        // Set reasonable timeout
+        httpClient.Timeout = TimeSpan.FromSeconds(30);
+    })
+    .AddPolicyHandler(HttpPolicyExtensions
+        .HandleTransientHttpError() // HttpRequestException and 5XX and 408 status codes
+        .WaitAndRetryAsync(
+            retryCount: 3,
+            sleepDurationProvider: retryAttempt => TimeSpan.FromSeconds(Math.Pow(2, retryAttempt))));
+
+// Register the service wrapper
+builder.Services.AddScoped<IMyAnimeListService, MyAnimeListService>();
 
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 builder.Services.AddEndpointsApiExplorer();
@@ -18,16 +62,30 @@ builder.Services.AddSwaggerGen(options =>
     {
         Title = "dafukSpin API",
         Version = "v1",
-        Description = "API for MyAnimeList integration and other services - Now using Minimal APIs"
+        Description = "API for anime data via MyAnimeList Official API - Using Minimal APIs with Refit and Client ID Authentication",
+        Contact = new Microsoft.OpenApi.Models.OpenApiContact
+        {
+            Name = "dafukSpin",
+            Url = new Uri("https://github.com/phuc4real/dafukSpin")
+        }
     });
     
-    // Add XML comments if needed
+    // Add XML comments if available
     var xmlFile = $"{System.Reflection.Assembly.GetExecutingAssembly().GetName().Name}.xml";
     var xmlPath = Path.Combine(AppContext.BaseDirectory, xmlFile);
     if (File.Exists(xmlPath))
     {
         options.IncludeXmlComments(xmlPath);
     }
+
+    // Add authentication requirement info to Swagger
+    options.AddSecurityDefinition("MAL-ClientId", new Microsoft.OpenApi.Models.OpenApiSecurityScheme
+    {
+        Type = Microsoft.OpenApi.Models.SecuritySchemeType.ApiKey,
+        In = Microsoft.OpenApi.Models.ParameterLocation.Header,
+        Name = "X-MAL-CLIENT-ID",
+        Description = "MyAnimeList API Client ID for authentication"
+    });
 });
 
 var app = builder.Build();
@@ -40,14 +98,24 @@ if (app.Environment.IsDevelopment())
     {
         options.SwaggerEndpoint("/swagger/v1/swagger.json", "dafukSpin API v1");
         options.RoutePrefix = string.Empty; // Makes Swagger UI available at root
+        options.DocExpansion(Swashbuckle.AspNetCore.SwaggerUI.DocExpansion.List);
+        options.DefaultModelsExpandDepth(-1); // Hide model schemas by default
     });
 }
 
 app.UseHttpsRedirection();
 
-app.UseAuthorization();
-
-// Map minimal API endpoints instead of controllers
+// Map minimal API endpoints
 app.MapMyAnimeListEndpoints();
 
+// Add a health check endpoint
+app.MapGet("/health", () => Results.Ok(new { status = "healthy", timestamp = DateTime.UtcNow }))
+    .WithName("HealthCheck")
+    .WithSummary("Health check endpoint")
+    .WithDescription("Returns the health status of the API")
+    .Produces(200);
+
 app.Run();
+
+// Make Program accessible for integration testing
+public partial class Program { }

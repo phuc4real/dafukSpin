@@ -1,267 +1,114 @@
 using System.Text.Json.Serialization;
 
-namespace dafukSpin.Models
-{
-    public class MyAnimeListResponse
-    {
-        [JsonPropertyName("data")]
-        public List<AnimeEntry> Data { get; set; } = new();
+namespace dafukSpin.Models;
 
-        [JsonPropertyName("paging")]
-        public Paging Paging { get; set; } = new();
-    }
+public sealed record MyAnimeListResponse<T>(
+    [property: JsonPropertyName("data")] IReadOnlyList<T> Data,
+    [property: JsonPropertyName("paging")] Paging Paging
+);
 
-    public class Paging
-    {
-        [JsonPropertyName("previous")]
-        public string Previous { get; set; } = string.Empty;
+public sealed record Paging(
+    [property: JsonPropertyName("previous")] string? Previous,
+    [property: JsonPropertyName("next")] string? Next
+);
 
-        [JsonPropertyName("next")]
-        public string Next { get; set; } = string.Empty;
-    }
+public sealed record AnimeEntry(
+    [property: JsonPropertyName("node")] AnimeNode Node,
+    [property: JsonPropertyName("list_status")] ListStatus? ListStatus
+);
 
-    public class AnimeEntry
-    {
-        [JsonPropertyName("node")]
-        public AnimeNode Node { get; set; } = new();
+public sealed record AnimeSearchResult(
+    [property: JsonPropertyName("node")] AnimeNode Node
+);
 
-        [JsonPropertyName("list_status")]
-        public ListStatus ListStatus { get; set; } = new();
-    }
+public sealed record AnimeRankingEntry(
+    [property: JsonPropertyName("node")] AnimeNode Node,
+    [property: JsonPropertyName("ranking")] Ranking? Ranking
+);
 
-    public class AnimeNode
-    {
-        [JsonPropertyName("id")]
-        public int Id { get; set; }
+public sealed record AnimeSeasonEntry(
+    [property: JsonPropertyName("node")] AnimeNode Node
+);
 
-        [JsonPropertyName("title")]
-        public string Title { get; set; } = string.Empty;
+public sealed record Ranking(
+    [property: JsonPropertyName("rank")] int Rank,
+    [property: JsonPropertyName("previous_rank")] int? PreviousRank
+);
 
-        [JsonPropertyName("main_picture")]
-        public Picture MainPicture { get; set; } = new();
+public sealed record AnimeNode(
+    [property: JsonPropertyName("id")] int Id,
+    [property: JsonPropertyName("title")] string Title,
+    [property: JsonPropertyName("main_picture")] Picture? MainPicture,
+    [property: JsonPropertyName("alternative_titles")] AlternativeTitles? AlternativeTitles,
+    [property: JsonPropertyName("start_date")] string? StartDate,
+    [property: JsonPropertyName("end_date")] string? EndDate,
+    [property: JsonPropertyName("synopsis")] string? Synopsis,
+    [property: JsonPropertyName("mean")] double? Mean,
+    [property: JsonPropertyName("rank")] int? Rank,
+    [property: JsonPropertyName("popularity")] int? Popularity,
+    [property: JsonPropertyName("num_episodes")] int? NumEpisodes,
+    [property: JsonPropertyName("start_season")] StartSeason? StartSeason,
+    [property: JsonPropertyName("broadcast")] Broadcast? Broadcast,
+    [property: JsonPropertyName("source")] string? Source,
+    [property: JsonPropertyName("average_episode_duration")] int? AverageEpisodeDuration,
+    [property: JsonPropertyName("rating")] string? Rating,
+    [property: JsonPropertyName("pictures")] IReadOnlyList<Picture>? Pictures,
+    [property: JsonPropertyName("background")] string? Background,
+    [property: JsonPropertyName("genres")] IReadOnlyList<Genre>? Genres,
+    [property: JsonPropertyName("studios")] IReadOnlyList<Studio>? Studios,
+    [property: JsonPropertyName("media_type")] string? MediaType,
+    [property: JsonPropertyName("status")] string? Status,
+    [property: JsonPropertyName("my_list_status")] ListStatus? MyListStatus,
+    [property: JsonPropertyName("num_list_users")] int? NumListUsers,
+    [property: JsonPropertyName("num_scoring_users")] int? NumScoringUsers,
+    [property: JsonPropertyName("nsfw")] string? Nsfw,
+    [property: JsonPropertyName("created_at")] string? CreatedAt,
+    [property: JsonPropertyName("updated_at")] string? UpdatedAt
+);
 
-        [JsonPropertyName("alternative_titles")]
-        public AlternativeTitles AlternativeTitles { get; set; } = new();
+public sealed record Picture(
+    [property: JsonPropertyName("medium")] string? Medium,
+    [property: JsonPropertyName("large")] string? Large
+);
 
-        [JsonPropertyName("start_date")]
-        public string StartDate { get; set; } = string.Empty;
+public sealed record AlternativeTitles(
+    [property: JsonPropertyName("synonyms")] IReadOnlyList<string>? Synonyms,
+    [property: JsonPropertyName("en")] string? En,
+    [property: JsonPropertyName("ja")] string? Ja
+);
 
-        [JsonPropertyName("end_date")]
-        public string EndDate { get; set; } = string.Empty;
+public sealed record StartSeason(
+    [property: JsonPropertyName("year")] int Year,
+    [property: JsonPropertyName("season")] string Season
+);
 
-        [JsonPropertyName("synopsis")]
-        public string Synopsis { get; set; } = string.Empty;
+public sealed record Broadcast(
+    [property: JsonPropertyName("day_of_the_week")] string? DayOfTheWeek,
+    [property: JsonPropertyName("start_time")] string? StartTime
+);
 
-        [JsonPropertyName("mean")]
-        public double? Mean { get; set; }
+public sealed record Genre(
+    [property: JsonPropertyName("id")] int Id,
+    [property: JsonPropertyName("name")] string Name
+);
 
-        [JsonPropertyName("rank")]
-        public int? Rank { get; set; }
+public sealed record Studio(
+    [property: JsonPropertyName("id")] int Id,
+    [property: JsonPropertyName("name")] string Name
+);
 
-        [JsonPropertyName("popularity")]
-        public int? Popularity { get; set; }
+public sealed record ListStatus(
+    [property: JsonPropertyName("status")] string Status,
+    [property: JsonPropertyName("score")] int? Score,
+    [property: JsonPropertyName("num_episodes_watched")] int? NumEpisodesWatched,
+    [property: JsonPropertyName("is_rewatching")] bool? IsRewatching,
+    [property: JsonPropertyName("updated_at")] string? UpdatedAt,
+    [property: JsonPropertyName("start_date")] string? StartDate,
+    [property: JsonPropertyName("finish_date")] string? FinishDate,
+    [property: JsonPropertyName("priority")] int? Priority,
+    [property: JsonPropertyName("num_times_rewatched")] int? NumTimesRewatched,
+    [property: JsonPropertyName("rewatch_value")] int? RewatchValue,
+    [property: JsonPropertyName("tags")] IReadOnlyList<string>? Tags,
+    [property: JsonPropertyName("comments")] string? Comments
+);
 
-        [JsonPropertyName("num_episodes")]
-        public int? NumEpisodes { get; set; }
-
-        [JsonPropertyName("status")]
-        public string Status { get; set; } = string.Empty;
-
-        [JsonPropertyName("genres")]
-        public List<Genre> Genres { get; set; } = new();
-
-        [JsonPropertyName("media_type")]
-        public string MediaType { get; set; } = string.Empty;
-
-        [JsonPropertyName("rating")]
-        public string Rating { get; set; } = string.Empty;
-
-        [JsonPropertyName("source")]
-        public string Source { get; set; } = string.Empty;
-
-        [JsonPropertyName("studios")]
-        public List<Studio> Studios { get; set; } = new();
-    }
-
-    public class Picture
-    {
-        [JsonPropertyName("medium")]
-        public string Medium { get; set; } = string.Empty;
-
-        [JsonPropertyName("large")]
-        public string Large { get; set; } = string.Empty;
-    }
-
-    public class AlternativeTitles
-    {
-        [JsonPropertyName("synonyms")]
-        public List<string> Synonyms { get; set; } = new();
-
-        [JsonPropertyName("en")]
-        public string English { get; set; } = string.Empty;
-
-        [JsonPropertyName("ja")]
-        public string Japanese { get; set; } = string.Empty;
-    }
-
-    public class Genre
-    {
-        [JsonPropertyName("id")]
-        public int Id { get; set; }
-
-        [JsonPropertyName("name")]
-        public string Name { get; set; } = string.Empty;
-    }
-
-    public class Studio
-    {
-        [JsonPropertyName("id")]
-        public int Id { get; set; }
-
-        [JsonPropertyName("name")]
-        public string Name { get; set; } = string.Empty;
-    }
-
-    public class ListStatus
-    {
-        [JsonPropertyName("status")]
-        public string Status { get; set; } = string.Empty;
-
-        [JsonPropertyName("score")]
-        public int Score { get; set; }
-
-        [JsonPropertyName("num_episodes_watched")]
-        public int NumEpisodesWatched { get; set; }
-
-        [JsonPropertyName("is_rewatching")]
-        public bool IsRewatching { get; set; }
-
-        [JsonPropertyName("updated_at")]
-        public DateTime UpdatedAt { get; set; }
-
-        [JsonPropertyName("start_date")]
-        public string StartDate { get; set; } = string.Empty;
-
-        [JsonPropertyName("finish_date")]
-        public string FinishDate { get; set; } = string.Empty;
-
-        [JsonPropertyName("priority")]
-        public int Priority { get; set; }
-
-        [JsonPropertyName("num_times_rewatched")]
-        public int NumTimesRewatched { get; set; }
-
-        [JsonPropertyName("rewatch_value")]
-        public int RewatchValue { get; set; }
-
-        [JsonPropertyName("tags")]
-        public List<string> Tags { get; set; } = new();
-
-        [JsonPropertyName("comments")]
-        public string Comments { get; set; } = string.Empty;
-    }
-
-    // DTOs for API responses
-    public class CompletedAnimeDto
-    {
-        public int Id { get; set; }
-        public string Title { get; set; } = string.Empty;
-        public string EnglishTitle { get; set; } = string.Empty;
-        public string ImageUrl { get; set; } = string.Empty;
-        public double? Score { get; set; }
-        public int UserScore { get; set; }
-        public int? Rank { get; set; }
-        public int? Popularity { get; set; }
-        public int? NumEpisodes { get; set; }
-        public string MediaType { get; set; } = string.Empty;
-        public string Rating { get; set; } = string.Empty;
-        public List<string> Genres { get; set; } = new();
-        public DateTime CompletedAt { get; set; }
-        public string FinishDate { get; set; } = string.Empty;
-    }
-
-    public class CurrentlyWatchingAnimeDto
-    {
-        public int Id { get; set; }
-        public string Title { get; set; } = string.Empty;
-        public string EnglishTitle { get; set; } = string.Empty;
-        public string ImageUrl { get; set; } = string.Empty;
-        public double? Score { get; set; }
-        public int UserScore { get; set; }
-        public int? Rank { get; set; }
-        public int? Popularity { get; set; }
-        public int? NumEpisodes { get; set; }
-        public int NumEpisodesWatched { get; set; }
-        public string MediaType { get; set; } = string.Empty;
-        public string Rating { get; set; } = string.Empty;
-        public List<string> Genres { get; set; } = new();
-        public List<string> Studios { get; set; } = new();
-        public bool IsRewatching { get; set; }
-        public DateTime LastUpdated { get; set; }
-        public string StartDate { get; set; } = string.Empty;
-        public double ProgressPercentage { get; set; }
-    }
-
-    public class AnimeHistoryDto
-    {
-        public int Id { get; set; }
-        public string Title { get; set; } = string.Empty;
-        public string EnglishTitle { get; set; } = string.Empty;
-        public string ImageUrl { get; set; } = string.Empty;
-        public double? Score { get; set; }
-        public int UserScore { get; set; }
-        public int? Rank { get; set; }
-        public int? Popularity { get; set; }
-        public int? NumEpisodes { get; set; }
-        public string MediaType { get; set; } = string.Empty;
-        public string Rating { get; set; } = string.Empty;
-        public List<string> Genres { get; set; } = new();
-        public List<string> Studios { get; set; } = new();
-        public DateTime CompletedAt { get; set; }
-        public string FinishDate { get; set; } = string.Empty;
-        public string StartDate { get; set; } = string.Empty;
-        public int NumTimesRewatched { get; set; }
-        public string Comments { get; set; } = string.Empty;
-        public List<string> Tags { get; set; } = new();
-    }
-
-    public class PlanToWatchAnimeDto
-    {
-        public int Id { get; set; }
-        public string Title { get; set; } = string.Empty;
-        public string EnglishTitle { get; set; } = string.Empty;
-        public string ImageUrl { get; set; } = string.Empty;
-        public double? Score { get; set; }
-        public int? Rank { get; set; }
-        public int? Popularity { get; set; }
-        public int? NumEpisodes { get; set; }
-        public string MediaType { get; set; } = string.Empty;
-        public string Rating { get; set; } = string.Empty;
-        public List<string> Genres { get; set; } = new();
-        public List<string> Studios { get; set; } = new();
-        public string Synopsis { get; set; } = string.Empty;
-        public string StartDate { get; set; } = string.Empty;
-        public string EndDate { get; set; } = string.Empty;
-        public string Source { get; set; } = string.Empty;
-        public int Priority { get; set; }
-        public DateTime AddedToListAt { get; set; }
-        public List<string> Tags { get; set; } = new();
-        public string Comments { get; set; } = string.Empty;
-    }
-
-    public class PagedAnimeHistoryResponse
-    {
-        public List<AnimeHistoryDto> Data { get; set; } = new();
-        public PaginationInfo Pagination { get; set; } = new();
-    }
-
-    public class PaginationInfo
-    {
-        public int CurrentPage { get; set; }
-        public int TotalPages { get; set; }
-        public int TotalItems { get; set; }
-        public int PageSize { get; set; }
-        public bool HasNext { get; set; }
-        public bool HasPrevious { get; set; }
-    }
-}
