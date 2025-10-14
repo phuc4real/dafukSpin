@@ -1,30 +1,96 @@
-# See https://aka.ms/customizecontainer to learn how to customize your debug container and how Visual Studio uses this Dockerfile to build your images for faster debugging.
+# Multi-stage build for dafukSpin ASP.NET Core Web API
+# Optimized for production deployment with security and performance best practices
 
-# This stage is used when running from VS in fast mode (Default for Debug configuration)
-FROM mcr.microsoft.com/dotnet/aspnet:8.0 AS base
-USER $APP_UID
+# Base runtime image with non-root user for security
+FROM mcr.microsoft.com/dotnet/aspnet:8.0-alpine AS base
 WORKDIR /app
+
+# Create a non-root user for running the application
+RUN addgroup --system --gid 1001 dafukspin && \
+    adduser --system --uid 1001 --ingroup dafukspin --shell /bin/false dafukspin
+
+# Set up proper ownership and permissions
+RUN chown -R dafukspin:dafukspin /app
+USER dafukspin
+
+# Expose ports (HTTP and HTTPS)
 EXPOSE 8080
 EXPOSE 8081
 
-
-# This stage is used to build the service project
-FROM mcr.microsoft.com/dotnet/sdk:8.0 AS build
+# Build stage with SDK image
+FROM mcr.microsoft.com/dotnet/sdk:8.0-alpine AS build
 ARG BUILD_CONFIGURATION=Release
 WORKDIR /src
-COPY ["dafukSpin/dafukSpin.csproj", "dafukSpin/"]
-RUN dotnet restore "./dafukSpin/dafukSpin.csproj"
-COPY . .
-WORKDIR "/src/dafukSpin"
-RUN dotnet build "./dafukSpin.csproj" -c $BUILD_CONFIGURATION -o /app/build
 
-# This stage is used to publish the service project to be copied to the final stage
+# Copy project files for dependency resolution
+COPY ["src/dafukSpin/dafukSpin.csproj", "src/dafukSpin/"]
+
+# Restore dependencies in a separate layer for better caching
+RUN dotnet restore "src/dafukSpin/dafukSpin.csproj" \
+    --runtime linux-musl-x64
+
+# Copy source code
+COPY . .
+
+# Build the application
+WORKDIR "/src/src/dafukSpin"
+RUN dotnet build "dafukSpin.csproj" \
+    -c $BUILD_CONFIGURATION \
+    -o /app/build \
+    --runtime linux-musl-x64 \
+    --self-contained false \
+    --no-restore
+
+# Test stage (optional - can be skipped in CI/CD if tests run separately)
+FROM build AS test
+WORKDIR /src
+RUN dotnet test "test/dafukSpin.Tests/dafukSpin.Tests.csproj" \
+    --configuration $BUILD_CONFIGURATION \
+    --no-build \
+    --verbosity normal \
+    --collect:"XPlat Code Coverage"
+
+# Publish stage - create optimized release build
 FROM build AS publish
 ARG BUILD_CONFIGURATION=Release
-RUN dotnet publish "./dafukSpin.csproj" -c $BUILD_CONFIGURATION -o /app/publish /p:UseAppHost=false
+WORKDIR "/src/src/dafukSpin"
 
-# This stage is used in production or when running from VS in regular mode (Default when not using the Debug configuration)
+RUN dotnet publish "dafukSpin.csproj" \
+    -c $BUILD_CONFIGURATION \
+    -o /app/publish \
+    --runtime linux-musl-x64 \
+    --self-contained false \
+    --no-restore \
+    /p:PublishTrimmed=false \
+    /p:PublishSingleFile=false
+
+# Final runtime stage
 FROM base AS final
 WORKDIR /app
-COPY --from=publish /app/publish .
+
+# Copy published application from publish stage
+COPY --from=publish --chown=dafukspin:dafukspin /app/publish .
+
+# Add health check
+HEALTHCHECK --interval=30s --timeout=10s --start-period=30s --retries=3 \
+    CMD curl -f http://localhost:8080/health || exit 1
+
+# Set environment variables for production
+ENV ASPNETCORE_ENVIRONMENT=Production
+ENV ASPNETCORE_URLS=http://+:8080
+ENV ASPNETCORE_HTTP_PORTS=8080
+ENV DOTNET_RUNNING_IN_CONTAINER=true
+ENV DOTNET_EnableDiagnostics=0
+
+# Labels for better container management
+LABEL maintainer="dafukSpin Team" \
+      description="dafukSpin API - MyAnimeList integration service" \
+      version="1.0" \
+      org.opencontainers.image.source="https://github.com/phuc4real/dafukSpin" \
+      org.opencontainers.image.description="ASP.NET Core Web API for anime data via MyAnimeList Official API"
+
+# Use non-root user
+USER dafukspin
+
+# Start the application
 ENTRYPOINT ["dotnet", "dafukSpin.dll"]

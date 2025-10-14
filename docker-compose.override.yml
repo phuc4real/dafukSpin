@@ -1,0 +1,50 @@
+# Docker Compose override for development
+# Use with: docker-compose -f docker-compose.yml -f docker-compose.override.yml up
+version: '3.8'
+
+services:
+  dafukspin-api:
+    build:
+      target: build  # Use build stage for development with SDK
+      args:
+        - BUILD_CONFIGURATION=Debug
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Development
+      - ASPNETCORE_URLS=https://+:7069;http://+:5244
+      - ASPNETCORE_Kestrel__Certificates__Default__Password=password
+      - ASPNETCORE_Kestrel__Certificates__Default__Path=/https/aspnetapp.pfx
+    ports:
+      - "5244:5244"   # HTTP
+      - "7069:7069"   # HTTPS
+    volumes:
+      # Mount source code for hot reload (if needed)
+      - ./src:/src:ro
+      # Mount user secrets for development
+      - ~/.microsoft/usersecrets:/root/.microsoft/usersecrets:ro
+      # Mount HTTPS certificates for development
+      - ~/.aspnet/https:/https:ro
+    # Override healthcheck for development
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:5244/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
+
+  # Optional: Development tools container
+  dev-tools:
+    image: mcr.microsoft.com/dotnet/sdk:8.0-alpine
+    container_name: dafukspin-dev-tools
+    working_dir: /workspace
+    volumes:
+      - .:/workspace
+    command: tail -f /dev/null  # Keep container running
+    networks:
+      - dafukspin-network
+    profiles:
+      - dev-tools
+
+  # Don't start reverse proxy in development by default
+  reverse-proxy:
+    profiles:
+      - never  # Override to never start in development

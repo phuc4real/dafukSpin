@@ -1,0 +1,75 @@
+# Docker Compose configuration for dafukSpin development and production
+version: '3.8'
+
+services:
+  # Main API service
+  dafukspin-api:
+    build:
+      context: .
+      dockerfile: src/dafukSpin/Dockerfile
+      target: final
+      args:
+        - BUILD_CONFIGURATION=Release
+    container_name: dafukspin-api
+    restart: unless-stopped
+    ports:
+      - "8080:8080"    # HTTP
+      - "8081:8081"    # HTTPS (if configured)
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Production
+      - ASPNETCORE_URLS=http://+:8080
+      - DOTNET_RUNNING_IN_CONTAINER=true
+      - MyAnimeList__BaseUrl=https://api.myanimelist.net/v2
+      # MyAnimeList__ClientId should be set via environment variables or secrets
+      # Never commit credentials to version control
+    env_file:
+      - .env  # Optional: load from .env file (create this file locally)
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
+    networks:
+      - dafukspin-network
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.dafukspin.rule=Host(`dafukspin.localhost`)"
+      - "traefik.http.services.dafukspin.loadbalancer.server.port=8080"
+
+  # Optional: Reverse proxy for production (Traefik)
+  reverse-proxy:
+    image: traefik:v3.1
+    container_name: dafukspin-traefik
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+      - "8090:8080"  # Traefik dashboard
+    command:
+      - "--api.insecure=true"
+      - "--providers.docker=true"
+      - "--providers.docker.exposedbydefault=false"
+      - "--entrypoints.web.address=:80"
+      - "--entrypoints.websecure.address=:443"
+      # Uncomment for Let's Encrypt SSL certificates
+      # - "--certificatesresolvers.letsencrypt.acme.tlschallenge=true"
+      # - "--certificatesresolvers.letsencrypt.acme.email=your-email@domain.com"
+      # - "--certificatesresolvers.letsencrypt.acme.storage=/letsencrypt/acme.json"
+    volumes:
+      - "/var/run/docker.sock:/var/run/docker.sock:ro"
+      # - "./letsencrypt:/letsencrypt"
+    networks:
+      - dafukspin-network
+    profiles:
+      - production  # Only start with --profile production
+
+networks:
+  dafukspin-network:
+    driver: bridge
+    name: dafukspin-network
+
+# Optional: Volumes for persistent data
+volumes:
+  dafukspin-data:
+    name: dafukspin-data

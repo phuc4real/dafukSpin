@@ -1,5 +1,4 @@
 using dafukSpin.Services;
-using dafukSpin.Extensions;
 using Refit;
 using System.Text.Json;
 using Polly;
@@ -38,24 +37,24 @@ builder.Services.AddRefitClient<IMyAnimeListApi>(refitSettings)
     {
         var configuration = serviceProvider.GetRequiredService<IConfiguration>();
         var logger = serviceProvider.GetRequiredService<ILogger<Program>>();
-        
+
         // Configure base URL and authentication
         var baseUrl = configuration["MyAnimeList:BaseUrl"] ?? "https://api.myanimelist.net/v2";
         var clientId = configuration["MyAnimeList:ClientId"];
         var clientSecret = configuration["MyAnimeList:ClientSecret"]; // Available for future OAuth implementation
-        
+
         if (string.IsNullOrEmpty(clientId))
         {
             logger.LogError("MyAnimeList ClientId is not configured. Please set it using: dotnet user-secrets set \"MyAnimeList:ClientId\" \"your-client-id\"");
             throw new InvalidOperationException("MyAnimeList ClientId not configured. Please configure it in user secrets.");
         }
-        
+
         logger.LogInformation("Configuring MyAnimeList API client with base URL: {BaseUrl}", baseUrl);
-        
+
         httpClient.BaseAddress = new Uri(baseUrl);
         httpClient.DefaultRequestHeaders.Add("X-MAL-CLIENT-ID", clientId);
         httpClient.DefaultRequestHeaders.Add("User-Agent", "dafukSpin/1.0");
-        
+
         // Set reasonable timeout
         httpClient.Timeout = TimeSpan.FromSeconds(30);
     })
@@ -83,7 +82,7 @@ builder.Services.AddSwaggerGen(options =>
             Url = new Uri("https://github.com/phuc4real/dafukSpin")
         }
     });
-    
+
     // Add XML comments if available
     var xmlFile = $"{System.Reflection.Assembly.GetExecutingAssembly().GetName().Name}.xml";
     var xmlPath = Path.Combine(AppContext.BaseDirectory, xmlFile);
@@ -118,9 +117,6 @@ if (app.Environment.IsDevelopment())
 }
 
 app.UseHttpsRedirection();
-
-// Map minimal API endpoints
-app.MapEndpointsGroup();
 
 // Add a health check endpoint
 app.MapGet("/health", () => Results.Ok(new { status = "healthy", timestamp = DateTime.UtcNow }))
