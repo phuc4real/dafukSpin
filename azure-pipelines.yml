@@ -1,4 +1,4 @@
-﻿trigger:
+trigger:
   branches:
     include:
     - main
@@ -25,6 +25,7 @@ stages:
   - job: BuildPush
     displayName: 'Build and Push'
     pool:
+      name: 'Azure Pipelines'
       vmImage: 'ubuntu-latest'   # cloud agent
     
     steps:
