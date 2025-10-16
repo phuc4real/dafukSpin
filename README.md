@@ -2,40 +2,42 @@
 
 A modern .NET 8 Web API that integrates with the official MyAnimeList API to provide anime data services. Built with minimal APIs, Refit HTTP client library, and comprehensive error handling.
 
-## Features
+## 🚀 Features
 
-- **Official MyAnimeList API Integration**: Uses the official v2 API with proper authentication
-- **Minimal APIs Architecture**: Modern ASP.NET Core endpoint mapping with clean organization
-- **Comprehensive Anime Data**: User lists, anime details, search, rankings, and seasonal data
-- **Refit HTTP Client**: Type-safe API client with automatic JSON serialization
-- **Polly Resilience**: Built-in retry policies and circuit breakers
-- **Swagger Documentation**: Interactive API documentation at root URL
-- **User Secrets**: Secure credential storage for development
+- **🎯 Official MyAnimeList API Integration**: Uses the official v2 API with proper authentication
+- **⚡ Minimal APIs Architecture**: Modern ASP.NET Core endpoint mapping with clean organization
+- **📊 Comprehensive Anime Data**: User lists, anime details, search, rankings, and seasonal data
+- **🔧 Refit HTTP Client**: Type-safe API client with automatic JSON serialization
+- **🛡️ Polly Resilience**: Built-in retry policies and circuit breakers
+- **📚 Swagger Documentation**: Interactive API documentation at root URL
+- **🔐 User Secrets**: Secure credential storage for development
+- **🐳 Docker Support**: Multi-stage Docker builds for containerized deployment
 
-## Architecture Highlights
+## 🏗️ Architecture Highlights
 
 - **Modern C# Patterns**: Records, pattern matching, file-scoped namespaces
 - **Clean Separation**: Services, models, and endpoint mappings in separate layers
 - **Type Safety**: Strongly-typed models with proper JSON serialization
 - **Error Handling**: Comprehensive logging and graceful error responses
 
-### Design Patterns
-- **Service Layer**: Clean abstraction over external API calls
-- **Repository Pattern**: Structured data access with interfaces
-- **Options Pattern**: Configuration binding with validation
+### 🎨 Design Patterns
+- **Service Layer Pattern**: Clean abstraction over external API calls with `IMyAnimeListService`
+- **Refit Pattern**: Type-safe HTTP client generation with `IMyAnimeListApi`
+- **Options Pattern**: Configuration binding with validation and user secrets
 - **Dependency Injection**: Clean service registration and lifecycle management
 - **Record Types**: Immutable data structures with modern C# syntax
 - **Sealed Classes**: Performance optimization and clear inheritance intent
-- **File-scoped Namespaces**: Modern C# namespace declarations
+- **Minimal APIs**: Route mapping through extension methods
 
-## Getting Started
+## 🛠️ Getting Started
 
 ### Prerequisites
-- .NET 8 SDK
+- .NET 8 SDK or later
 - MyAnimeList API credentials (Client ID)
 - Internet connection (for MyAnimeList API access)
+- Docker (optional, for containerized deployment)
 
-### Setup
+### 📦 Setup
 
 1. **Clone the repository**
    ```bash
@@ -43,7 +45,7 @@ A modern .NET 8 Web API that integrates with the official MyAnimeList API to pro
    cd dafukSpin
    ```
 
-2. **Configure MyAnimeList API Credentials**
+2. **🔑 Configure MyAnimeList API Credentials**
    
    The application requires MyAnimeList API credentials stored securely in user secrets:
    
@@ -62,115 +64,242 @@ A modern .NET 8 Web API that integrates with the official MyAnimeList API to pro
    2. Create a new API client application
    3. Copy the generated Client ID and Client Secret
    
-   **Important:** Never commit API credentials to source control. They are securely stored in user secrets.
+   **⚠️ Important:** Never commit API credentials to source control. They are securely stored in user secrets.
 
-3. **Run the application**
+3. **🚀 Run the application**
    ```bash
    cd src/dafukSpin
    dotnet run
    ```
 
-4. **Access the API**
+4. **🌐 Access the API**
    - **Swagger UI**: `https://localhost:7069` or `http://localhost:5244`
    - **API Base**: `http://localhost:5244/api`
+   - **Health Check**: `http://localhost:5244/health`
 
-## API Endpoints
+## 📋 API Endpoints
 
 ### Base URL
 ```
-http://localhost:5244/api
+http://localhost:5244/api/anime
 ```
 
-### Available Endpoints
+### 👤 User Anime Lists
+| Endpoint | Method | Description | Example |
+|----------|--------|-------------|---------|
+| `/users/{username}/anime` | GET | Get user's anime list with filters | `/users/testuser/anime?status=watching` |
+| `/users/{username}/anime/completed` | GET | Get user's completed anime | `/users/testuser/anime/completed` |
+| `/users/{username}/anime/watching` | GET | Get user's currently watching anime | `/users/testuser/anime/watching` |
+| `/users/{username}/anime/plan-to-watch` | GET | Get user's plan to watch anime | `/users/testuser/anime/plan-to-watch` |
+| `/users/{username}/anime/on-hold` | GET | Get user's on hold anime | `/users/testuser/anime/on-hold` |
+| `/users/{username}/anime/dropped` | GET | Get user's dropped anime | `/users/testuser/anime/dropped` |
 
-#### User Anime Lists
-- `GET /users/{username}/completed` - Get user's completed anime
-- `GET /users/{username}/watching` - Get user's currently watching anime
-- `GET /users/{username}/plan-to-watch` - Get user's plan to watch anime
-- `GET /users/{username}/on-hold` - Get user's on hold anime
-- `GET /users/{username}/dropped` - Get user's dropped anime
-- `GET /users/{username}/animelist` - Get user's anime list with custom status filter
+### 🎬 Anime Details & Search
+| Endpoint | Method | Description | Example |
+|----------|--------|-------------|---------|
+| `/details/{animeId}` | GET | Get detailed anime information | `/details/5114` |
+| `/search` | GET | Search anime by query | `/search?query=naruto&limit=10` |
 
-#### Anime Details & Search
-- `GET /anime/{animeId}` - Get detailed anime information
-- `GET /anime/search` - Search anime by query
+### 🏆 Discovery & Rankings
+| Endpoint | Method | Description | Example |
+|----------|--------|-------------|---------|
+| `/ranking` | GET | Get anime rankings by type | `/ranking?rankingType=all&limit=50` |
+| `/seasonal/{year}/{season}` | GET | Get seasonal anime | `/seasonal/2024/spring` |
+| `/suggestions` | GET | Get suggested anime | `/suggestions?limit=20` |
 
-#### Discovery & Rankings
-- `GET /anime/ranking` - Get anime rankings by type
-- `GET /anime/season/{year}/{season}` - Get seasonal anime
-- `GET /anime/suggestions` - Get suggested anime (requires authentication)
+### 🔍 Query Parameters
 
-#### Health Check
-- `GET /health` - API health status
+#### Common Parameters
+- `limit` (int): Maximum number of results (default: 100)
+- `offset` (int): Offset for pagination (default: 0)
+- `sort` (string): Sort order (`list_score`, `list_updated_at`, `anime_title`, `anime_start_date`, `anime_id`)
 
-### Example Usage
+#### Status Filters
+- `status` (string): Filter by status (`watching`, `completed`, `on_hold`, `dropped`, `plan_to_watch`)
+
+#### Ranking Types
+- `rankingType` (string): Type of ranking (`all`, `airing`, `upcoming`, `tv`, `ova`, `movie`, `special`, `bypopularity`, `favorite`)
+
+#### Seasons
+- `season` (string): Season name (`winter`, `spring`, `summer`, `fall`)
+
+### 🔍 Example Usage
 
 **Get user's completed anime:**
 ```http
-GET http://localhost:5244/api/users/testuser/completed
+GET http://localhost:5244/api/anime/users/testuser/anime/completed?limit=10&sort=list_updated_at
 ```
 
 **Get anime details:**
 ```http
-GET http://localhost:5244/api/anime/5114
+GET http://localhost:5244/api/anime/details/5114
 ```
 
 **Search for anime:**
 ```http
-GET http://localhost:5244/api/anime/search?query=naruto&limit=10
+GET http://localhost:5244/api/anime/search?query=attack%20on%20titan&limit=5
 ```
 
 **Get seasonal anime:**
 ```http
-GET http://localhost:5244/api/anime/season/2024/spring
+GET http://localhost:5244/api/anime/seasonal/2024/spring?sort=anime_score&limit=25
 ```
 
-### Response Format
+**Get anime rankings:**
+```http
+GET http://localhost:5244/api/anime/ranking?rankingType=tv&limit=50
+```
 
-All endpoints return JSON responses with consistent error handling:
+### 📊 Response Format
 
+All endpoints return JSON responses with consistent structure:
+
+#### Successful Response (List Data)
 ```json
 {
-  "data": [...],
+  "data": [
+    {
+      "node": {
+        "id": 5114,
+        "title": "Fullmetal Alchemist: Brotherhood",
+        "main_picture": {
+          "medium": "https://cdn.myanimelist.net/images/anime/1208/94745.jpg",
+          "large": "https://cdn.myanimelist.net/images/anime/1208/94745l.jpg"
+        },
+        "alternative_titles": {
+          "synonyms": [],
+          "en": "Fullmetal Alchemist: Brotherhood",
+          "ja": "鋼の錬金術師 FULLMETAL ALCHEMIST"
+        },
+        "mean": 9.1,
+        "rank": 1,
+        "popularity": 3,
+        "num_episodes": 64,
+        "media_type": "TV",
+        "rating": "R - 17+ (violence & profanity)",
+        "genres": [
+          {"id": 1, "name": "Action"},
+          {"id": 2, "name": "Adventure"}
+        ]
+      },
+      "list_status": {
+        "status": "completed",
+        "score": 10,
+        "num_episodes_watched": 64,
+        "updated_at": "2023-04-01T12:00:00Z"
+      }
+    }
+  ],
   "paging": {
-    "previous": "string",
-    "next": "string"
+    "previous": null,
+    "next": "https://api.myanimelist.net/v2/users/testuser/animelist?offset=100"
   }
 }
 ```
 
-## Development
+#### Successful Response (Single Item)
+```json
+{
+  "id": 5114,
+  "title": "Fullmetal Alchemist: Brotherhood",
+  "synopsis": "After a horrific alchemy experiment goes wrong...",
+  "mean": 9.1,
+  "rank": 1,
+  "popularity": 3,
+  "num_episodes": 64,
+  "media_type": "TV",
+  "status": "finished_airing",
+  "rating": "R - 17+ (violence & profanity)",
+  "studios": [
+    {"id": 4, "name": "Bones"}
+  ]
+}
+```
 
-### Running Tests
+#### Error Response
+```json
+{
+  "type": "https://tools.ietf.org/html/rfc7231#section-6.5.4",
+  "title": "Not Found",
+  "status": 404,
+  "detail": "User 'testuser' not found or has no completed anime"
+}
+```
+
+### 🚨 HTTP Status Codes
+- `200 OK`: Successful request
+- `400 Bad Request`: Invalid parameters or malformed request
+- `401 Unauthorized`: Authentication required
+- `404 Not Found`: User or anime not found
+- `429 Too Many Requests`: Rate limit exceeded
+- `500 Internal Server Error`: Server error
+
+## 🔧 Development
+
+### 🧪 Running Tests
 ```bash
 # Run all tests
 dotnet test
 
 # Run with coverage
 dotnet test --collect:"XPlat Code Coverage"
+
+# Run specific test project
+dotnet test test/dafukSpin.Tests/
 ```
 
-### Building
+### 🏗️ Building
 ```bash
 # Build the solution
 dotnet build
 
 # Build for release
 dotnet build -c Release
+
+# Clean and rebuild
+dotnet clean && dotnet build
 ```
 
-### Docker
+### 🐳 Docker
+
+#### Build and Run
 ```bash
 # Build Docker image
 docker build -t dafukspin .
 
-# Run container (Note: User secrets not available in container)
-docker run -p 8080:8080 -e MyAnimeList__ClientId="your-client-id" dafukspin
+# Run container with environment variables
+docker run -p 8080:8080 \
+  -e MyAnimeList__ClientId="your-client-id" \
+  -e MyAnimeList__ClientSecret="your-client-secret" \
+  dafukspin
 ```
 
-## Configuration
+#### Docker Compose (Development)
+```yaml
+version: '3.8'
+services:
+  dafukspin-api:
+    build: .
+    ports:
+      - "8080:8080"
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Development
+      - MyAnimeList__ClientId=your-client-id
+      - MyAnimeList__ClientSecret=your-client-secret
+```
 
-### User Secrets Configuration
+### 🔍 Debugging
+```bash
+# Run in development mode with detailed logging
+dotnet run --environment Development
+
+# Run with specific logging level
+dotnet run --environment Development -- --Logging:LogLevel:Default=Debug
+```
+
+## ⚙️ Configuration
+
+### 🔐 User Secrets Configuration (Development)
 Development credentials are stored in .NET User Secrets:
 
 ```json
@@ -180,37 +309,125 @@ Development credentials are stored in .NET User Secrets:
 }
 ```
 
-### Application Settings
+**Managing User Secrets:**
+```bash
+# List current secrets
+dotnet user-secrets list
+
+# Set a secret
+dotnet user-secrets set "MyAnimeList:ClientId" "your-client-id"
+
+# Remove a secret
+dotnet user-secrets remove "MyAnimeList:ClientId"
+
+# Clear all secrets
+dotnet user-secrets clear
+```
+
+### 📄 Application Settings
 Public configuration in `appsettings.json`:
 
 ```json
 {
+  "Logging": {
+    "LogLevel": {
+      "Default": "Information",
+      "Microsoft.AspNetCore": "Warning"
+    }
+  },
   "MyAnimeList": {
     "BaseUrl": "https://api.myanimelist.net/v2"
   }
 }
 ```
 
-### Production Configuration
-For production deployment:
-- Use Azure Key Vault, AWS Secrets Manager, or similar secure storage
-- Set environment variables: `MyAnimeList__ClientId` and `MyAnimeList__ClientSecret`
-- Never store credentials in configuration files
+### 🌐 Production Configuration
+For production deployment, use secure credential storage:
 
-### Environment Variables
-- `ASPNETCORE_ENVIRONMENT`: Environment (Development/Production)
-- `MyAnimeList__ClientId`: MyAnimeList API Client ID (production)
-- `MyAnimeList__ClientSecret`: MyAnimeList API Client Secret (production)
+#### Azure
+```bash
+# Using Azure Key Vault
+az keyvault secret set --vault-name "your-vault" --name "MyAnimeList--ClientId" --value "your-client-id"
+```
 
-## Contributing
+#### AWS
+```bash
+# Using AWS Secrets Manager
+aws secretsmanager create-secret --name "dafukSpin/MyAnimeList" --secret-string '{"ClientId":"your-client-id","ClientSecret":"your-client-secret"}'
+```
 
-1. Fork the repository
-2. Create a feature branch (`git checkout -b feature/amazing-feature`)
-3. Follow the coding guidelines in `.github/copilot-instructions.md`
-4. Write tests for new features
-5. Commit your changes (`git commit -m 'Add amazing feature'`)
-6. Push to the branch (`git push origin feature/amazing-feature`)
-7. Open a Pull Request
+#### Environment Variables
+```bash
+# Linux/macOS
+export MyAnimeList__ClientId="your-client-id"
+export MyAnimeList__ClientSecret="your-client-secret"
 
-## License
-This project is licensed under the MIT License - see the [LICENSE.txt](LICENSE.txt) file for details.
+# Windows
+set MyAnimeList__ClientId=your-client-id
+set MyAnimeList__ClientSecret=your-client-secret
+```
+
+### 🌍 Environment Variables Reference
+| Variable | Description | Required | Default |
+|----------|-------------|----------|---------|
+| `ASPNETCORE_ENVIRONMENT` | Runtime environment | No | `Production` |
+| `MyAnimeList__ClientId` | MyAnimeList API Client ID | Yes | - |
+| `MyAnimeList__ClientSecret` | MyAnimeList API Client Secret | No | - |
+| `MyAnimeList__BaseUrl` | MyAnimeList API base URL | No | `https://api.myanimelist.net/v2` |
+
+## 🤝 Contributing
+
+We welcome contributions! Please follow these guidelines:
+
+### 📋 Development Guidelines
+1. **Fork the repository** and create a feature branch
+   ```bash
+   git checkout -b feature/amazing-feature
+   ```
+
+2. **Follow coding standards** in `.github/copilot-instructions.md`
+   - Use modern C# patterns (records, pattern matching, file-scoped namespaces)
+   - Write comprehensive tests for new features
+   - Follow the established architecture patterns
+
+3. **Commit your changes** with descriptive messages
+   ```bash
+   git commit -m 'feat: Add amazing new feature for user anime statistics'
+   ```
+
+4. **Push to your branch** and open a Pull Request
+   ```bash
+   git push origin feature/amazing-feature
+   ```
+
+### 🧪 Testing Requirements
+- Write unit tests for all new functionality
+- Ensure all existing tests pass
+- Maintain code coverage above 80%
+
+### 📚 Documentation
+- Update README.md for new features
+- Add XML documentation for public APIs
+- Update API.md for new endpoints
+
+### 🏷️ Commit Convention
+We follow [Conventional Commits](https://www.conventionalcommits.org/):
+- `feat:` - New features
+- `fix:` - Bug fixes
+- `docs:` - Documentation changes
+- `refactor:` - Code refactoring
+- `test:` - Adding tests
+- `chore:` - Maintenance tasks
+
+## 📜 License
+This project is licensed under the **GNU Affero General Public License v3.0** - see the [LICENSE.txt](LICENSE.txt) file for details.
+
+## 🙏 Acknowledgments
+- [MyAnimeList](https://myanimelist.net/) for providing the official API
+- [Refit](https://github.com/reactiveui/refit) for the excellent HTTP client library
+- [Polly](https://github.com/App-vNext/Polly) for resilience and transient-fault handling
+
+## 📞 Support
+- 📧 **Issues**: [GitHub Issues](https://github.com/phuc4real/dafukSpin/issues)
+- 📖 **Documentation**: Check the `docs/` folder
+- 💬 **Discussions**: [GitHub Discussions](https://github.com/phuc4real/dafukSpin/discussions)
