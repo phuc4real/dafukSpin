@@ -1,27 +1,106 @@
 @dafukSpin_HostAddress = http://localhost:5244
 
-# MyAnimeList API Endpoints
+# dafukSpin MyAnimeList API Endpoints
 
-### Get Top 10 Latest Completed Anime
-GET {{dafukSpin_HostAddress}}/api/myanimelist/users/testuser/completed-anime
+## Health Check
+### Health Check
+GET {{dafukSpin_HostAddress}}/health
 Accept: application/json
 
 ###
 
-### Get Top 5 Currently Watching Anime
-GET {{dafukSpin_HostAddress}}/api/myanimelist/users/testuser/currently-watching
+## User Anime Lists
+
+### Get User's Anime List with Custom Filter
+GET {{dafukSpin_HostAddress}}/api/anime/users/testuser/anime?status=watching&limit=5
 Accept: application/json
 
 ###
 
-### Get User Anime History (Paginated)
-GET {{dafukSpin_HostAddress}}/api/myanimelist/users/testuser/history?page=1&pageSize=10
+### Get User's Completed Anime
+GET {{dafukSpin_HostAddress}}/api/anime/users/testuser/anime/completed?limit=10&sort=list_updated_at
 Accept: application/json
 
 ###
 
-### Get Random Plan to Watch Anime
-GET {{dafukSpin_HostAddress}}/api/myanimelist/users/testuser/plan-to-watch/random
+### Get User's Currently Watching Anime
+GET {{dafukSpin_HostAddress}}/api/anime/users/testuser/anime/watching?limit=5
+Accept: application/json
+
+###
+
+### Get User's Plan to Watch Anime
+GET {{dafukSpin_HostAddress}}/api/anime/users/testuser/anime/plan-to-watch?limit=10
+Accept: application/json
+
+###
+
+### Get User's On Hold Anime
+GET {{dafukSpin_HostAddress}}/api/anime/users/testuser/anime/on-hold
+Accept: application/json
+
+###
+
+### Get User's Dropped Anime
+GET {{dafukSpin_HostAddress}}/api/anime/users/testuser/anime/dropped
+Accept: application/json
+
+###
+
+## Anime Details & Search
+
+### Get Anime Details by ID
+GET {{dafukSpin_HostAddress}}/api/anime/details/5114
+Accept: application/json
+
+###
+
+### Search Anime by Query
+GET {{dafukSpin_HostAddress}}/api/anime/search?query=attack%20on%20titan&limit=5
+Accept: application/json
+
+###
+
+### Search Anime - Naruto
+GET {{dafukSpin_HostAddress}}/api/anime/search?query=naruto&limit=3
+Accept: application/json
+
+###
+
+## Discovery & Rankings
+
+### Get Anime Rankings - All
+GET {{dafukSpin_HostAddress}}/api/anime/ranking?rankingType=all&limit=10
+Accept: application/json
+
+###
+
+### Get Anime Rankings - TV Series
+GET {{dafukSpin_HostAddress}}/api/anime/ranking?rankingType=tv&limit=10
+Accept: application/json
+
+###
+
+### Get Anime Rankings - Movies
+GET {{dafukSpin_HostAddress}}/api/anime/ranking?rankingType=movie&limit=10
+Accept: application/json
+
+###
+
+### Get Seasonal Anime - Spring 2024
+GET {{dafukSpin_HostAddress}}/api/anime/seasonal/2024/spring?limit=10&sort=anime_score
+Accept: application/json
+
+###
+
+### Get Seasonal Anime - Fall 2023
+GET {{dafukSpin_HostAddress}}/api/anime/seasonal/2023/fall?limit=10
+Accept: application/json
+
+###
+
+### Get Suggested Anime
+GET {{dafukSpin_HostAddress}}/api/anime/suggestions?limit=10
 Accept: application/json
 
 ###
