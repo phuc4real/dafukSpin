@@ -13,7 +13,7 @@ A modern .NET 8 Web API that integrates with the official MyAnimeList API to pro
 - **⚡ Multi-Tier Caching**: Redis with memory cache fallback for optimal performance
 - **🔍 Correlation ID Tracking**: Request tracing across all services and dependencies
 - **📦 Centralized Package Management**: Directory.Build.props and Directory.Packages.props for consistent versioning
-- ** Swagger Documentation**: Interactive API documentation at root URL
+- **📚 Swagger Documentation**: Interactive API documentation at root URL
 - **🔐 User Secrets**: Secure credential storage for development
 - **🐳 Docker Support**: Multi-stage Docker builds for containerized deployment
 
@@ -73,8 +73,7 @@ A modern .NET 8 Web API that integrates with the official MyAnimeList API to pro
    
    **⚠️ Important:** Never commit API credentials to source control. They are securely stored in user secrets.
 
-<<<<<<< HEAD
-3. **Configure Redis (Optional)**
+3. **⚡ Configure Redis (Optional)**
    
    For optimal performance, configure Redis caching:
    
@@ -85,20 +84,13 @@ A modern .NET 8 Web API that integrates with the official MyAnimeList API to pro
    
    If Redis is not available, the application automatically falls back to in-memory caching.
 
-4. **Run the application**
-=======
-3. **🚀 Run the application**
->>>>>>> 7575298b283896e616649c3724ba47320234788e
+4. **🚀 Run the application**
    ```bash
    cd src/dafukSpin
    dotnet run
    ```
 
-<<<<<<< HEAD
-5. **Access the API**
-=======
-4. **🌐 Access the API**
->>>>>>> 7575298b283896e616649c3724ba47320234788e
+5. **🌐 Access the API**
    - **Swagger UI**: `https://localhost:7069` or `http://localhost:5244`
    - **API Base**: `http://localhost:5244/api`
    - **Health Check**: `http://localhost:5244/health`
@@ -140,7 +132,6 @@ http://localhost:5244/api/anime
 - `offset` (int): Offset for pagination (default: 0)
 - `sort` (string): Sort order (`list_score`, `list_updated_at`, `anime_title`, `anime_start_date`, `anime_id`)
 
-<<<<<<< HEAD
 #### Cache Management
 - `DELETE /api/cache/clear` - Clear all cached data (development/admin use)
 - `GET /api/cache/stats` - Get cache statistics and performance metrics
@@ -151,7 +142,6 @@ http://localhost:5244/api/anime
 - **Performance Monitoring**: Built-in process and runtime metrics
 
 ### Example Usage
-=======
 #### Status Filters
 - `status` (string): Filter by status (`watching`, `completed`, `on_hold`, `dropped`, `plan_to_watch`)
 
@@ -162,7 +152,6 @@ http://localhost:5244/api/anime
 - `season` (string): Season name (`winter`, `spring`, `summer`, `fall`)
 
 ### 🔍 Example Usage
->>>>>>> 7575298b283896e616649c3724ba47320234788e
 
 **Get user's completed anime:**
 ```http
@@ -189,15 +178,29 @@ GET http://localhost:5244/api/anime/seasonal/2024/spring?sort=anime_score&limit=
 GET http://localhost:5244/api/anime/ranking?rankingType=tv&limit=50
 ```
 
-<<<<<<< HEAD
 All endpoints return JSON responses with consistent error handling and correlation tracking:
-=======
 ### 📊 Response Format
->>>>>>> 7575298b283896e616649c3724ba47320234788e
 
 All endpoints return JSON responses with consistent structure:
 
 #### Successful Response (List Data)
+```json
+{
+  "data": [...],
+  "paging": {
+    "previous": "string", 
+    "next": "string"
+  }
+}
+```
+
+**Response Headers:**
+- `X-Correlation-ID`: Unique request identifier for tracing
+- `Cache-Control`: Caching directives for client-side optimization
+
+#### Detailed Response Examples
+
+**Successful Response (List Data):**
 ```json
 {
   "data": [
@@ -234,23 +237,50 @@ All endpoints return JSON responses with consistent structure:
     }
   ],
   "paging": {
-<<<<<<< HEAD
-    "previous": "string", 
-    "next": "string"
-=======
     "previous": null,
     "next": "https://api.myanimelist.net/v2/users/testuser/animelist?offset=100"
->>>>>>> 7575298b283896e616649c3724ba47320234788e
   }
 }
 ```
 
-<<<<<<< HEAD
-**Response Headers:**
-- `X-Correlation-ID`: Unique request identifier for tracing
-- `Cache-Control`: Caching directives for client-side optimization
+**Successful Response (Single Item):**
+```json
+{
+  "id": 5114,
+  "title": "Fullmetal Alchemist: Brotherhood",
+  "synopsis": "After a horrific alchemy experiment goes wrong...",
+  "mean": 9.1,
+  "rank": 1,
+  "popularity": 3,
+  "num_episodes": 64,
+  "media_type": "TV",
+  "status": "finished_airing",
+  "rating": "R - 17+ (violence & profanity)",
+  "studios": [
+    {"id": 4, "name": "Bones"}
+  ]
+}
+```
 
-## Observability & Monitoring
+**Error Response:**
+```json
+{
+  "type": "https://tools.ietf.org/html/rfc7231#section-6.5.4",
+  "title": "Not Found",
+  "status": 404,
+  "detail": "User 'testuser' not found or has no completed anime"
+}
+```
+
+### 🚨 HTTP Status Codes
+- `200 OK`: Successful request
+- `400 Bad Request`: Invalid parameters or malformed request
+- `401 Unauthorized`: Authentication required
+- `404 Not Found`: User or anime not found
+- `429 Too Many Requests`: Rate limit exceeded
+- `500 Internal Server Error`: Server error
+
+## 📈 Observability & Monitoring
 
 ### Structured Logging
 - **Serilog Integration**: Rich structured logging with multiple sinks
@@ -270,7 +300,7 @@ All endpoints return JSON responses with consistent structure:
 - **Health Checks**: Automatic fallback on Redis unavailability
 - **Management Endpoints**: Clear cache and view statistics
 
-## Caching Strategy
+## ⚡ Caching Strategy
 
 ### Redis Caching (Primary)
 - **External Cache**: Redis server for shared caching across instances
@@ -282,7 +312,7 @@ All endpoints return JSON responses with consistent structure:
 - **Performance**: Fastest access for single-instance deployments
 - **Development**: Works without external dependencies
 
-## Development
+## 🔧 Development
 
 ### Project Structure
 
@@ -303,7 +333,7 @@ dafukSpin/
     └── Models/                    # Model validation tests
 ```
 
-### Package Management
+### 📦 Package Management
 
 This project uses **centralized package management** for enterprise-grade dependency management:
 
@@ -312,49 +342,7 @@ This project uses **centralized package management** for enterprise-grade depend
 - **Project Files**: Only contain package references without versions
 - **Benefits**: Consistent versions, simplified updates, reduced conflicts
 
-### Running Tests
-=======
-#### Successful Response (Single Item)
-```json
-{
-  "id": 5114,
-  "title": "Fullmetal Alchemist: Brotherhood",
-  "synopsis": "After a horrific alchemy experiment goes wrong...",
-  "mean": 9.1,
-  "rank": 1,
-  "popularity": 3,
-  "num_episodes": 64,
-  "media_type": "TV",
-  "status": "finished_airing",
-  "rating": "R - 17+ (violence & profanity)",
-  "studios": [
-    {"id": 4, "name": "Bones"}
-  ]
-}
-```
-
-#### Error Response
-```json
-{
-  "type": "https://tools.ietf.org/html/rfc7231#section-6.5.4",
-  "title": "Not Found",
-  "status": 404,
-  "detail": "User 'testuser' not found or has no completed anime"
-}
-```
-
-### 🚨 HTTP Status Codes
-- `200 OK`: Successful request
-- `400 Bad Request`: Invalid parameters or malformed request
-- `401 Unauthorized`: Authentication required
-- `404 Not Found`: User or anime not found
-- `429 Too Many Requests`: Rate limit exceeded
-- `500 Internal Server Error`: Server error
-
-## 🔧 Development
-
 ### 🧪 Running Tests
->>>>>>> 7575298b283896e616649c3724ba47320234788e
 ```bash
 # Run all tests
 dotnet test
@@ -363,11 +351,7 @@ dotnet test
 dotnet test --collect:"XPlat Code Coverage"
 
 # Run specific test project
-<<<<<<< HEAD
 dotnet test test/dafukSpin.Tests
-=======
-dotnet test test/dafukSpin.Tests/
->>>>>>> 7575298b283896e616649c3724ba47320234788e
 ```
 
 ### 🏗️ Building
@@ -378,11 +362,7 @@ dotnet build
 # Build for release
 dotnet build -c Release
 
-<<<<<<< HEAD
-# Clean build
-=======
 # Clean and rebuild
->>>>>>> 7575298b283896e616649c3724ba47320234788e
 dotnet clean && dotnet build
 ```
 
@@ -393,22 +373,15 @@ dotnet clean && dotnet build
 # Build Docker image
 docker build -t dafukspin .
 
-<<<<<<< HEAD
 # Run with environment variables
 docker run -p 8080:8080 \
   -e MyAnimeList__ClientId="your-client-id" \
+  -e MyAnimeList__ClientSecret="your-client-secret" \
   -e Redis__ConnectionString="your-redis-connection" \
   dafukspin
 
 # Run with Redis via Docker Compose
 docker-compose up
-=======
-# Run container with environment variables
-docker run -p 8080:8080 \
-  -e MyAnimeList__ClientId="your-client-id" \
-  -e MyAnimeList__ClientSecret="your-client-secret" \
-  dafukspin
->>>>>>> 7575298b283896e616649c3724ba47320234788e
 ```
 
 #### Docker Compose (Development)
@@ -491,21 +464,6 @@ Public configuration in `appsettings.json`:
 }
 ```
 
-<<<<<<< HEAD
-### Production Configuration
-For production deployment:
-- Use Azure Key Vault, AWS Secrets Manager, or similar secure storage
-- Set environment variables: `MyAnimeList__ClientId`, `Redis__ConnectionString`
-- Configure OpenTelemetry exporters for monitoring systems
-- Never store credentials in configuration files
-
-### Environment Variables
-- `ASPNETCORE_ENVIRONMENT`: Environment (Development/Production)
-- `MyAnimeList__ClientId`: MyAnimeList API Client ID (production)
-- `MyAnimeList__ClientSecret`: MyAnimeList API Client Secret (production)
-- `Redis__ConnectionString`: Redis connection string (optional)
-- `OTEL_EXPORTER_OTLP_ENDPOINT`: OpenTelemetry endpoint for production monitoring
-=======
 ### 🌐 Production Configuration
 For production deployment, use secure credential storage:
 
@@ -514,7 +472,6 @@ For production deployment, use secure credential storage:
 # Using Azure Key Vault
 az keyvault secret set --vault-name "your-vault" --name "MyAnimeList--ClientId" --value "your-client-id"
 ```
->>>>>>> 7575298b283896e616649c3724ba47320234788e
 
 #### AWS
 ```bash
@@ -533,13 +490,15 @@ set MyAnimeList__ClientId=your-client-id
 set MyAnimeList__ClientSecret=your-client-secret
 ```
 
-### 🌍 Environment Variables Reference
+### ⚙️ Environment Variables Reference
 | Variable | Description | Required | Default |
 |----------|-------------|----------|---------|
 | `ASPNETCORE_ENVIRONMENT` | Runtime environment | No | `Production` |
 | `MyAnimeList__ClientId` | MyAnimeList API Client ID | Yes | - |
 | `MyAnimeList__ClientSecret` | MyAnimeList API Client Secret | No | - |
 | `MyAnimeList__BaseUrl` | MyAnimeList API base URL | No | `https://api.myanimelist.net/v2` |
+| `Redis__ConnectionString` | Redis connection string | No | - |
+| `OTEL_EXPORTER_OTLP_ENDPOINT` | OpenTelemetry endpoint | No | - |
 
 ## 🤝 Contributing
 
