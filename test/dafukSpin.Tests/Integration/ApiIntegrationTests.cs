@@ -56,7 +56,7 @@ public sealed class ApiIntegrationTests : IClassFixture<WebApplicationFactory<Pr
     }
 
     [Fact]
-    public async Task Application_ShouldStart_WithoutErrors()
+    public void Application_ShouldStart_WithoutErrors()
     {
         // Arrange & Act - The application should start without throwing exceptions
         using var scope = _factory.Services.CreateScope();

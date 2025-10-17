@@ -1,6 +1,6 @@
 # dafukSpin
 
-A modern .NET 8 Web API that integrates with the official MyAnimeList API to provide anime data services. Built with minimal APIs, Refit HTTP client library, and comprehensive error handling.
+A modern .NET 8 Web API that integrates with the official MyAnimeList API to provide anime data services. Built with minimal APIs, enterprise-grade observability, caching, and comprehensive error handling.
 
 ## Features
 
@@ -9,6 +9,10 @@ A modern .NET 8 Web API that integrates with the official MyAnimeList API to pro
 - **Comprehensive Anime Data**: User lists, anime details, search, rankings, and seasonal data
 - **Refit HTTP Client**: Type-safe API client with automatic JSON serialization
 - **Polly Resilience**: Built-in retry policies and circuit breakers
+- **Enterprise Observability**: Structured logging with Serilog and OpenTelemetry tracing
+- **Multi-Tier Caching**: Redis with memory cache fallback for optimal performance
+- **Correlation ID Tracking**: Request tracing across all services and dependencies
+- **Centralized Package Management**: Directory.Build.props and Directory.Packages.props for consistent versioning
 - **Swagger Documentation**: Interactive API documentation at root URL
 - **User Secrets**: Secure credential storage for development
 
@@ -18,6 +22,8 @@ A modern .NET 8 Web API that integrates with the official MyAnimeList API to pro
 - **Clean Separation**: Services, models, and endpoint mappings in separate layers
 - **Type Safety**: Strongly-typed models with proper JSON serialization
 - **Error Handling**: Comprehensive logging and graceful error responses
+- **Observability First**: Full request tracing, metrics, and structured logging
+- **Performance Optimized**: Multi-tier caching with Redis and memory fallback
 
 ### Design Patterns
 - **Service Layer**: Clean abstraction over external API calls
@@ -33,6 +39,7 @@ A modern .NET 8 Web API that integrates with the official MyAnimeList API to pro
 ### Prerequisites
 - .NET 8 SDK
 - MyAnimeList API credentials (Client ID)
+- Redis server (optional - falls back to memory cache)
 - Internet connection (for MyAnimeList API access)
 
 ### Setup
@@ -64,13 +71,24 @@ A modern .NET 8 Web API that integrates with the official MyAnimeList API to pro
    
    **Important:** Never commit API credentials to source control. They are securely stored in user secrets.
 
-3. **Run the application**
+3. **Configure Redis (Optional)**
+   
+   For optimal performance, configure Redis caching:
+   
+   ```bash
+   # Set Redis connection string (optional)
+   dotnet user-secrets set "Redis:ConnectionString" "localhost:6379"
+   ```
+   
+   If Redis is not available, the application automatically falls back to in-memory caching.
+
+4. **Run the application**
    ```bash
    cd src/dafukSpin
    dotnet run
    ```
 
-4. **Access the API**
+5. **Access the API**
    - **Swagger UI**: `https://localhost:7069` or `http://localhost:5244`
    - **API Base**: `http://localhost:5244/api`
 
@@ -103,6 +121,15 @@ http://localhost:5244/api
 #### Health Check
 - `GET /health` - API health status
 
+#### Cache Management
+- `DELETE /api/cache/clear` - Clear all cached data (development/admin use)
+- `GET /api/cache/stats` - Get cache statistics and performance metrics
+
+#### Observability
+- **Structured Logging**: All requests include correlation IDs for tracing
+- **OpenTelemetry Metrics**: Request duration, cache hit rates, external API calls
+- **Performance Monitoring**: Built-in process and runtime metrics
+
 ### Example Usage
 
 **Get user's completed anime:**
@@ -127,19 +154,83 @@ GET http://localhost:5244/api/anime/season/2024/spring
 
 ### Response Format
 
-All endpoints return JSON responses with consistent error handling:
+All endpoints return JSON responses with consistent error handling and correlation tracking:
 
 ```json
 {
   "data": [...],
   "paging": {
-    "previous": "string",
+    "previous": "string", 
     "next": "string"
   }
 }
 ```
 
+**Response Headers:**
+- `X-Correlation-ID`: Unique request identifier for tracing
+- `Cache-Control`: Caching directives for client-side optimization
+
+## Observability & Monitoring
+
+### Structured Logging
+- **Serilog Integration**: Rich structured logging with multiple sinks
+- **Correlation IDs**: Every request gets a unique identifier for distributed tracing
+- **Request Logging**: Automatic HTTP request/response logging with timing
+- **Error Tracking**: Comprehensive error logging with context
+
+### OpenTelemetry Tracing
+- **Distributed Tracing**: Full request lifecycle tracking
+- **External API Monitoring**: MyAnimeList API call tracing
+- **Performance Metrics**: Request duration, cache performance, system metrics
+- **Export Options**: Console output (development), OTLP for production
+
+### Cache Monitoring
+- **Multi-Tier Strategy**: Redis primary with memory cache fallback
+- **Performance Metrics**: Hit rates, response times, eviction statistics
+- **Health Checks**: Automatic fallback on Redis unavailability
+- **Management Endpoints**: Clear cache and view statistics
+
+## Caching Strategy
+
+### Redis Caching (Primary)
+- **External Cache**: Redis server for shared caching across instances
+- **Configurable TTL**: Different expiration times for different data types
+- **Fallback Handling**: Automatic memory cache fallback on Redis failure
+
+### Memory Caching (Fallback)
+- **Local Cache**: In-process caching when Redis unavailable
+- **Performance**: Fastest access for single-instance deployments
+- **Development**: Works without external dependencies
+
 ## Development
+
+### Project Structure
+
+The solution uses **centralized package management** with Directory.Build.props and Directory.Packages.props for consistent versioning across all projects:
+
+```
+dafukSpin/
+├── Directory.Build.props          # Common build properties
+├── Directory.Packages.props       # Centralized package versions
+├── src/dafukSpin/                 # Main API project
+│   ├── Services/                  # Business logic and integrations
+│   ├── Models/                    # DTOs and data models
+│   ├── Extensions/                # Minimal API endpoint mappings
+│   └── Program.cs                 # Application startup
+└── test/dafukSpin.Tests/          # Comprehensive test suite
+    ├── Integration/               # API integration tests
+    ├── Services/                  # Service unit tests
+    └── Models/                    # Model validation tests
+```
+
+### Package Management
+
+This project uses **centralized package management** for enterprise-grade dependency management:
+
+- **Directory.Build.props**: Common build properties, target framework, and global settings
+- **Directory.Packages.props**: All package versions defined in one place (25+ packages)
+- **Project Files**: Only contain package references without versions
+- **Benefits**: Consistent versions, simplified updates, reduced conflicts
 
 ### Running Tests
 ```bash
@@ -148,6 +239,9 @@ dotnet test
 
 # Run with coverage
 dotnet test --collect:"XPlat Code Coverage"
+
+# Run specific test project
+dotnet test test/dafukSpin.Tests
 ```
 
 ### Building
@@ -157,6 +251,9 @@ dotnet build
 
 # Build for release
 dotnet build -c Release
+
+# Clean build
+dotnet clean && dotnet build
 ```
 
 ### Docker
@@ -164,8 +261,14 @@ dotnet build -c Release
 # Build Docker image
 docker build -t dafukspin .
 
-# Run container (Note: User secrets not available in container)
-docker run -p 8080:8080 -e MyAnimeList__ClientId="your-client-id" dafukspin
+# Run with environment variables
+docker run -p 8080:8080 \
+  -e MyAnimeList__ClientId="your-client-id" \
+  -e Redis__ConnectionString="your-redis-connection" \
+  dafukspin
+
+# Run with Redis via Docker Compose
+docker-compose up
 ```
 
 ## Configuration
@@ -176,7 +279,8 @@ Development credentials are stored in .NET User Secrets:
 ```json
 {
   "MyAnimeList:ClientId": "your-client-id",
-  "MyAnimeList:ClientSecret": "your-client-secret"
+  "MyAnimeList:ClientSecret": "your-client-secret",
+  "Redis:ConnectionString": "localhost:6379"
 }
 ```
 
@@ -187,6 +291,18 @@ Public configuration in `appsettings.json`:
 {
   "MyAnimeList": {
     "BaseUrl": "https://api.myanimelist.net/v2"
+  },
+  "Serilog": {
+    "MinimumLevel": "Information",
+    "WriteTo": [
+      { "Name": "Console" },
+      { "Name": "File", "Args": { "path": "logs/dafukspin-.txt" } }
+    ]
+  },
+  "Cache": {
+    "DefaultTtlMinutes": 30,
+    "AnimeTtlMinutes": 60,
+    "UserListTtlMinutes": 15
   }
 }
 ```
@@ -194,13 +310,16 @@ Public configuration in `appsettings.json`:
 ### Production Configuration
 For production deployment:
 - Use Azure Key Vault, AWS Secrets Manager, or similar secure storage
-- Set environment variables: `MyAnimeList__ClientId` and `MyAnimeList__ClientSecret`
+- Set environment variables: `MyAnimeList__ClientId`, `Redis__ConnectionString`
+- Configure OpenTelemetry exporters for monitoring systems
 - Never store credentials in configuration files
 
 ### Environment Variables
 - `ASPNETCORE_ENVIRONMENT`: Environment (Development/Production)
 - `MyAnimeList__ClientId`: MyAnimeList API Client ID (production)
 - `MyAnimeList__ClientSecret`: MyAnimeList API Client Secret (production)
+- `Redis__ConnectionString`: Redis connection string (optional)
+- `OTEL_EXPORTER_OTLP_ENDPOINT`: OpenTelemetry endpoint for production monitoring
 
 ## Contributing
 

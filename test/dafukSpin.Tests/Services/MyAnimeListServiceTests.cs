@@ -1,5 +1,6 @@
 using dafukSpin.Models;
 using dafukSpin.Services;
+using dafukSpin.Services.Caching;
 using Microsoft.Extensions.Logging;
 using Refit;
 
@@ -9,13 +10,15 @@ public sealed class MyAnimeListServiceTests
 {
     private readonly Mock<IMyAnimeListApi> _mockApi;
     private readonly Mock<ILogger<MyAnimeListService>> _mockLogger;
+    private readonly Mock<ICacheService> _mockCache;
     private readonly MyAnimeListService _service;
 
     public MyAnimeListServiceTests()
     {
         _mockApi = new Mock<IMyAnimeListApi>();
         _mockLogger = new Mock<ILogger<MyAnimeListService>>();
-        _service = new MyAnimeListService(_mockApi.Object, _mockLogger.Object);
+        _mockCache = new Mock<ICacheService>();
+        _service = new MyAnimeListService(_mockApi.Object, _mockLogger.Object, _mockCache.Object);
     }
 
     [Fact]
