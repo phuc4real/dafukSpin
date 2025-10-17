@@ -67,6 +67,9 @@ public static class RefitExtensions
         // Register the service wrapper
         services.AddScoped<IMyAnimeListService, MyAnimeListService>();
 
+        // Register pagination URL rewrite service
+        services.AddScoped<IPaginationUrlRewriteService, PaginationUrlRewriteService>();
+
         return services;
     }
 }

@@ -1,4 +1,5 @@
 using dafukSpin.Endpoints;
+using dafukSpin.Extensions;
 using dafukSpin.Models;
 using dafukSpin.Services;
 using Microsoft.AspNetCore.Mvc;
@@ -51,6 +52,8 @@ public sealed class AnimeDataEndpoints : IEndpoint
     private static async Task<IResult> SearchAnimeAsync(
         [FromQuery] string query,
         IMyAnimeListService service,
+        IPaginationUrlRewriteService paginationRewriteService,
+        HttpContext httpContext,
         [FromQuery] int limit = 100,
         [FromQuery] int offset = 0,
         CancellationToken cancellationToken = default)
@@ -63,7 +66,12 @@ public sealed class AnimeDataEndpoints : IEndpoint
         try
         {
             var result = await service.SearchAnimeAsync(query, limit, offset, cancellationToken);
-            return result is not null ? Results.Ok(result) : Results.NotFound($"No anime found for query '{query}'");
+            if (result is not null)
+            {
+                var rewrittenResult = result.RewritePaginationUrls(paginationRewriteService, httpContext, "/api/anime/search");
+                return Results.Ok(rewrittenResult);
+            }
+            return Results.NotFound($"No anime found for query '{query}'");
         }
         catch (Exception ex)
         {

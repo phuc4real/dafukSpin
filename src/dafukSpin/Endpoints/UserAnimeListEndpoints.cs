@@ -1,4 +1,5 @@
 using dafukSpin.Endpoints;
+using dafukSpin.Extensions;
 using dafukSpin.Models;
 using dafukSpin.Services;
 using Microsoft.AspNetCore.Mvc;
@@ -67,6 +68,8 @@ public sealed class UserAnimeListEndpoints : IEndpoint
     private static async Task<IResult> GetUserAnimeListAsync(
         [FromRoute] string username,
         IMyAnimeListService service,
+        IPaginationUrlRewriteService paginationRewriteService,
+        HttpContext httpContext,
         [FromQuery] string? status = null,
         [FromQuery] string? sort = null,
         [FromQuery] int limit = 100,
@@ -76,7 +79,12 @@ public sealed class UserAnimeListEndpoints : IEndpoint
         try
         {
             var result = await service.GetUserAnimeListAsync(username, status, sort, limit, offset, cancellationToken);
-            return result is not null ? Results.Ok(result) : Results.NotFound($"User '{username}' not found or has no anime list");
+            if (result is not null)
+            {
+                var rewrittenResult = result.RewritePaginationUrls(paginationRewriteService, httpContext, $"/api/anime/users/{username}/anime");
+                return Results.Ok(rewrittenResult);
+            }
+            return Results.NotFound($"User '{username}' not found or has no anime list");
         }
         catch (Exception ex)
         {
@@ -87,6 +95,8 @@ public sealed class UserAnimeListEndpoints : IEndpoint
     private static async Task<IResult> GetUserCompletedAnimeAsync(
         [FromRoute] string username,
         IMyAnimeListService service,
+        IPaginationUrlRewriteService paginationRewriteService,
+        HttpContext httpContext,
         [FromQuery] string? sort = null,
         [FromQuery] int limit = 100,
         [FromQuery] int offset = 0,
@@ -95,7 +105,12 @@ public sealed class UserAnimeListEndpoints : IEndpoint
         try
         {
             var result = await service.GetUserCompletedAnimeAsync(username, sort, limit, offset, cancellationToken);
-            return result is not null ? Results.Ok(result) : Results.NotFound($"User '{username}' not found or has no completed anime");
+            if (result is not null)
+            {
+                var rewrittenResult = result.RewritePaginationUrls(paginationRewriteService, httpContext, $"/api/anime/users/{username}/anime/completed");
+                return Results.Ok(rewrittenResult);
+            }
+            return Results.NotFound($"User '{username}' not found or has no completed anime");
         }
         catch (Exception ex)
         {
@@ -106,6 +121,8 @@ public sealed class UserAnimeListEndpoints : IEndpoint
     private static async Task<IResult> GetUserCurrentlyWatchingAnimeAsync(
         [FromRoute] string username,
         IMyAnimeListService service,
+        IPaginationUrlRewriteService paginationRewriteService,
+        HttpContext httpContext,
         [FromQuery] string? sort = null,
         [FromQuery] int limit = 100,
         [FromQuery] int offset = 0,
@@ -114,7 +131,12 @@ public sealed class UserAnimeListEndpoints : IEndpoint
         try
         {
             var result = await service.GetUserCurrentlyWatchingAnimeAsync(username, sort, limit, offset, cancellationToken);
-            return result is not null ? Results.Ok(result) : Results.NotFound($"User '{username}' not found or is not currently watching any anime");
+            if (result is not null)
+            {
+                var rewrittenResult = result.RewritePaginationUrls(paginationRewriteService, httpContext, $"/api/anime/users/{username}/anime/watching");
+                return Results.Ok(rewrittenResult);
+            }
+            return Results.NotFound($"User '{username}' not found or is not currently watching any anime");
         }
         catch (Exception ex)
         {
@@ -125,6 +147,8 @@ public sealed class UserAnimeListEndpoints : IEndpoint
     private static async Task<IResult> GetUserPlanToWatchAnimeAsync(
         [FromRoute] string username,
         IMyAnimeListService service,
+        IPaginationUrlRewriteService paginationRewriteService,
+        HttpContext httpContext,
         [FromQuery] string? sort = null,
         [FromQuery] int limit = 100,
         [FromQuery] int offset = 0,
@@ -133,7 +157,12 @@ public sealed class UserAnimeListEndpoints : IEndpoint
         try
         {
             var result = await service.GetUserPlanToWatchAnimeAsync(username, sort, limit, offset, cancellationToken);
-            return result is not null ? Results.Ok(result) : Results.NotFound($"User '{username}' not found or has no plan to watch anime");
+            if (result is not null)
+            {
+                var rewrittenResult = result.RewritePaginationUrls(paginationRewriteService, httpContext, $"/api/anime/users/{username}/anime/plan-to-watch");
+                return Results.Ok(rewrittenResult);
+            }
+            return Results.NotFound($"User '{username}' not found or has no plan to watch anime");
         }
         catch (Exception ex)
         {
@@ -144,6 +173,8 @@ public sealed class UserAnimeListEndpoints : IEndpoint
     private static async Task<IResult> GetUserOnHoldAnimeAsync(
         [FromRoute] string username,
         IMyAnimeListService service,
+        IPaginationUrlRewriteService paginationRewriteService,
+        HttpContext httpContext,
         [FromQuery] string? sort = null,
         [FromQuery] int limit = 100,
         [FromQuery] int offset = 0,
@@ -152,7 +183,12 @@ public sealed class UserAnimeListEndpoints : IEndpoint
         try
         {
             var result = await service.GetUserOnHoldAnimeAsync(username, sort, limit, offset, cancellationToken);
-            return result is not null ? Results.Ok(result) : Results.NotFound($"User '{username}' not found or has no on-hold anime");
+            if (result is not null)
+            {
+                var rewrittenResult = result.RewritePaginationUrls(paginationRewriteService, httpContext, $"/api/anime/users/{username}/anime/on-hold");
+                return Results.Ok(rewrittenResult);
+            }
+            return Results.NotFound($"User '{username}' not found or has no on-hold anime");
         }
         catch (Exception ex)
         {
@@ -163,6 +199,8 @@ public sealed class UserAnimeListEndpoints : IEndpoint
     private static async Task<IResult> GetUserDroppedAnimeAsync(
         [FromRoute] string username,
         IMyAnimeListService service,
+        IPaginationUrlRewriteService paginationRewriteService,
+        HttpContext httpContext,
         [FromQuery] string? sort = null,
         [FromQuery] int limit = 100,
         [FromQuery] int offset = 0,
@@ -171,7 +209,12 @@ public sealed class UserAnimeListEndpoints : IEndpoint
         try
         {
             var result = await service.GetUserDroppedAnimeAsync(username, sort, limit, offset, cancellationToken);
-            return result is not null ? Results.Ok(result) : Results.NotFound($"User '{username}' not found or has no dropped anime");
+            if (result is not null)
+            {
+                var rewrittenResult = result.RewritePaginationUrls(paginationRewriteService, httpContext, $"/api/anime/users/{username}/anime/dropped");
+                return Results.Ok(rewrittenResult);
+            }
+            return Results.NotFound($"User '{username}' not found or has no dropped anime");
         }
         catch (Exception ex)
         {

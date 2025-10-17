@@ -1,4 +1,5 @@
 using dafukSpin.Endpoints;
+using dafukSpin.Extensions;
 using dafukSpin.Models;
 using dafukSpin.Services;
 using Microsoft.AspNetCore.Mvc;
@@ -42,6 +43,8 @@ public sealed class AnimeRankingEndpoints : IEndpoint
 
     private static async Task<IResult> GetAnimeRankingAsync(
         IMyAnimeListService service,
+        IPaginationUrlRewriteService paginationRewriteService,
+        HttpContext httpContext,
         [FromQuery] string rankingType = "all",
         [FromQuery] int limit = 100,
         [FromQuery] int offset = 0,
@@ -50,7 +53,12 @@ public sealed class AnimeRankingEndpoints : IEndpoint
         try
         {
             var result = await service.GetAnimeRankingAsync(rankingType, limit, offset, cancellationToken);
-            return result is not null ? Results.Ok(result) : Results.NotFound($"No ranking data found for type '{rankingType}'");
+            if (result is not null)
+            {
+                var rewrittenResult = result.RewritePaginationUrls(paginationRewriteService, httpContext, "/api/anime/ranking");
+                return Results.Ok(rewrittenResult);
+            }
+            return Results.NotFound($"No ranking data found for type '{rankingType}'");
         }
         catch (Exception ex)
         {
@@ -62,6 +70,8 @@ public sealed class AnimeRankingEndpoints : IEndpoint
         [FromRoute] int year,
         [FromRoute] string season,
         IMyAnimeListService service,
+        IPaginationUrlRewriteService paginationRewriteService,
+        HttpContext httpContext,
         [FromQuery] string? sort = null,
         [FromQuery] int limit = 100,
         [FromQuery] int offset = 0,
@@ -76,7 +86,12 @@ public sealed class AnimeRankingEndpoints : IEndpoint
         try
         {
             var result = await service.GetSeasonalAnimeAsync(year, season, sort, limit, offset, cancellationToken);
-            return result is not null ? Results.Ok(result) : Results.NotFound($"No seasonal anime found for {season} {year}");
+            if (result is not null)
+            {
+                var rewrittenResult = result.RewritePaginationUrls(paginationRewriteService, httpContext, $"/api/anime/seasonal/{year}/{season}");
+                return Results.Ok(rewrittenResult);
+            }
+            return Results.NotFound($"No seasonal anime found for {season} {year}");
         }
         catch (Exception ex)
         {
@@ -86,6 +101,8 @@ public sealed class AnimeRankingEndpoints : IEndpoint
 
     private static async Task<IResult> GetSuggestedAnimeAsync(
         IMyAnimeListService service,
+        IPaginationUrlRewriteService paginationRewriteService,
+        HttpContext httpContext,
         [FromQuery] int limit = 100,
         [FromQuery] int offset = 0,
         CancellationToken cancellationToken = default)
@@ -93,7 +110,12 @@ public sealed class AnimeRankingEndpoints : IEndpoint
         try
         {
             var result = await service.GetSuggestedAnimeAsync(limit, offset, cancellationToken);
-            return result is not null ? Results.Ok(result) : Results.NotFound("No suggested anime found");
+            if (result is not null)
+            {
+                var rewrittenResult = result.RewritePaginationUrls(paginationRewriteService, httpContext, "/api/anime/suggested");
+                return Results.Ok(rewrittenResult);
+            }
+            return Results.NotFound("No suggested anime found");
         }
         catch (Exception ex)
         {

@@ -23,6 +23,17 @@ http://localhost:5244/api/anime
 - **Content-Type**: `application/json`
 - **Character encoding**: UTF-8
 
+### 🔗 Pagination URL Rewriting
+All pagination URLs in API responses are automatically rewritten to use dafukSpin endpoints instead of direct MyAnimeList URLs. This provides:
+
+- **API Consistency**: All URLs point to dafukSpin endpoints
+- **Request Control**: All pagination requests go through dafukSpin for caching and logging
+- **Transparent Experience**: Users work with a unified API interface
+
+**Example:**
+- **Original**: `https://api.myanimelist.net/v2/users/testuser/animelist?offset=100`
+- **Rewritten**: `http://localhost:5244/api/anime/users/testuser/anime/completed?offset=100`
+
 ---
 
 ## 📖 Endpoints Reference
@@ -96,7 +107,7 @@ Accept: application/json
   ],
   "paging": {
     "previous": null,
-    "next": "https://api.myanimelist.net/v2/users/testuser/animelist?offset=100"
+    "next": "http://localhost:5244/api/anime/users/testuser/anime/completed?offset=100"
   }
 }
 ```
@@ -301,7 +312,7 @@ Accept: application/json
   ],
   "paging": {
     "previous": null,
-    "next": "https://api.myanimelist.net/v2/anime?q=attack%20on%20titan&offset=100"
+    "next": "http://localhost:5244/api/anime/search?query=attack%20on%20titan&offset=100"
   }
 }
 ```
@@ -360,7 +371,7 @@ Accept: application/json
   ],
   "paging": {
     "previous": null,
-    "next": "https://api.myanimelist.net/v2/anime/ranking?ranking_type=tv&offset=100"
+    "next": "http://localhost:5244/api/anime/ranking?rankingType=tv&offset=100"
   }
 }
 ```

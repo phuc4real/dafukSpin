@@ -12,7 +12,8 @@ A modern .NET 8 Web API that integrates with the official MyAnimeList API to pro
 - **📈 Enterprise Observability**: Structured logging with Serilog and OpenTelemetry tracing
 - **⚡ Multi-Tier Caching**: Redis with memory cache fallback for optimal performance
 - **🔍 Correlation ID Tracking**: Request tracing across all services and dependencies
-- **📦 Centralized Package Management**: Directory.Build.props and Directory.Packages.props for consistent versioning
+- **� Pagination URL Rewriting**: Automatic rewriting of MyAnimeList pagination URLs to use dafukSpin endpoints
+- **�📦 Centralized Package Management**: Directory.Build.props and Directory.Packages.props for consistent versioning
 - **📚 Swagger Documentation**: Interactive API documentation at root URL
 - **🔐 User Secrets**: Secure credential storage for development
 - **🐳 Docker Support**: Multi-stage Docker builds for containerized deployment
@@ -136,6 +137,16 @@ http://localhost:5244/api/anime
 - `DELETE /api/cache/clear` - Clear all cached data (development/admin use)
 - `GET /api/cache/stats` - Get cache statistics and performance metrics
 
+#### Pagination URL Rewriting
+All pagination URLs in API responses are automatically rewritten to use dafukSpin endpoints instead of direct MyAnimeList URLs. This ensures:
+- **API Consistency**: All URLs point to your API, maintaining a clean interface
+- **Control**: Route all requests through your API for logging, caching, and rate limiting
+- **Transparency**: Users interact only with your API endpoints
+
+**Example:**
+- **MyAnimeList URL**: `https://api.myanimelist.net/v2/users/testuser/animelist?offset=100`
+- **Rewritten URL**: `http://localhost:5244/api/anime/users/testuser/anime/completed?offset=100`
+
 #### Observability
 - **Structured Logging**: All requests include correlation IDs for tracing
 - **OpenTelemetry Metrics**: Request duration, cache hit rates, external API calls
@@ -238,7 +249,7 @@ All endpoints return JSON responses with consistent structure:
   ],
   "paging": {
     "previous": null,
-    "next": "https://api.myanimelist.net/v2/users/testuser/animelist?offset=100"
+    "next": "http://localhost:5244/api/anime/users/testuser/anime/completed?offset=100"
   }
 }
 ```
