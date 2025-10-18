@@ -11,39 +11,40 @@ trigger:
 variables:
   buildConfiguration: 'Release'
   
-  # Docker Configuration
-  dockerRegistryServiceConnection: 'dafukDockerConnection'  # your Docker Hub service connection
-  imageRepository: 'sh3r44/dafukspin-api'
+  # Docker Configuration (Local)
+  imageRepository: 'dafukspin-api'
+  imageName: 'dafukspin-api'
   containerName: 'dafukspin-api'
   dockerfilePath: '$(Build.SourcesDirectory)/src/dafukSpin/Dockerfile'
   tag: '$(Build.BuildId)'
 
 stages:
 - stage: Build
-  displayName: 'Build and Push Docker Image'
+  displayName: 'Build Docker Image on Homelab'
   jobs:
-  - job: BuildPush
-    displayName: 'Build and Push'
+  - job: BuildImage
+    displayName: 'Build Docker Image'
     pool:
-      name: 'Azure Pipelines'
-      vmImage: 'ubuntu-latest'   # cloud agent
+      name: 'HomelabPool'
     
     steps:
     - checkout: self
     
-    # Build and Push Docker Image
-    - task: Docker@2
-      displayName: 'Build and Push Docker Image'
-      inputs:
-        containerRegistry: $(dockerRegistryServiceConnection)
-        repository: $(imageRepository)
-        command: buildAndPush
-        Dockerfile: '$(dockerfilePath)'
-        buildContext: '$(Build.SourcesDirectory)'
-        tags: |
-          latest
-          $(tag)
-        arguments: '--build-arg BUILD_CONFIGURATION=$(buildConfiguration)'
+    # Build Docker Image locally
+    - script: |
+        echo "Building Docker image locally..."
+        echo "Image: $(imageName):$(tag)"
+        
+        docker build \
+          -f $(dockerfilePath) \
+          -t $(imageName):$(tag) \
+          -t $(imageName):latest \
+          --build-arg BUILD_CONFIGURATION=$(buildConfiguration) \
+          $(Build.SourcesDirectory)
+        
+        echo "✅ Docker image built successfully!"
+        docker images $(imageName)
+      displayName: 'Build Docker Image'
 
 - stage: Deploy
   displayName: 'Deploy to Homelab'
@@ -60,8 +61,7 @@ stages:
     
     - script: |
         echo "Deploying dafukSpin API to homelab..."
-        echo "Pulling latest image: $(imageRepository):latest"
-        docker pull $(imageRepository):latest
+        echo "Using local image: $(imageName):latest"
         
         echo "Stopping existing container if running..."
         docker stop $(containerName) || true
@@ -78,7 +78,7 @@ stages:
           --health-timeout=10s \
           --health-start-period=30s \
           --health-retries=3 \
-          $(imageRepository):latest
+          $(imageName):latest
         
         echo "Container started successfully!"
         
@@ -92,7 +92,7 @@ stages:
         
         echo "✅ dafukSpin API deployed successfully and is healthy!"
         docker ps --filter "name=$(containerName)" --format "table {{.Names}}\t{{.Status}}\t{{.Ports}}"
-      displayName: 'Pull and Run Container'
+      displayName: 'Deploy Container'
       
     # Optional: Clean up old images to save space
     - script: |
