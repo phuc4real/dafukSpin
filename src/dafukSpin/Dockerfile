@@ -22,8 +22,13 @@ FROM mcr.microsoft.com/dotnet/sdk:8.0-alpine AS build
 ARG BUILD_CONFIGURATION=Release
 WORKDIR /src
 
+# Copy solution-level package management files (required for Central Package Management)
+COPY ["Directory.Build.props", "./"]
+COPY ["Directory.Packages.props", "./"]
+
 # Copy project files for dependency resolution
 COPY ["src/dafukSpin/dafukSpin.csproj", "src/dafukSpin/"]
+COPY ["test/dafukSpin.Tests/dafukSpin.Tests.csproj", "test/dafukSpin.Tests/"]
 
 # Restore dependencies in a separate layer for better caching
 RUN dotnet restore "src/dafukSpin/dafukSpin.csproj" \
@@ -71,9 +76,9 @@ WORKDIR /app
 # Copy published application from publish stage
 COPY --from=publish --chown=dafukspin:dafukspin /app/publish .
 
-# Add health check
-HEALTHCHECK --interval=30s --timeout=10s --start-period=30s --retries=3 \
-    CMD curl -f http://localhost:8080/health || exit 1
+# Add health check using wget (available in Alpine)
+HEALTHCHECK --interval=30s --timeout=10s --start-period=40s --retries=3 \
+    CMD wget --no-verbose --tries=1 --spider http://localhost:8080/health || exit 1
 
 # Set environment variables for production
 ENV ASPNETCORE_ENVIRONMENT=Production
